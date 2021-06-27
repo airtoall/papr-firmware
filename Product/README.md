@@ -6,8 +6,6 @@ The firmware runs on the ATMega328p microcontroller chip (the "MCU") that is on 
 
 This is an Arduino-compatible app, written in C++. The app doesn't run on any actual arduino board, but we use the Arduino IDE and runtime as the base for this app so that we can take advantage of the Arduino APIs, Arduino libraries, and the Arduino community (forums, blogs, etc). If it became necessary to eliminate any Arduino dependencies, I think you could do it with a day or two of work.
 
-Unit testing: at present there is no automated testing of this code. However, the code is broken down into C++ classes in a way that would make it somewhat easy to add unit testing. This repo has a branch "unittest" that contains some very-out-of-date experimental code for this.
-
 ## Dev environment setup
 
 To compile or develop this code:
@@ -47,8 +45,6 @@ If you want to create a new project to run on the PAPR's MCU (for example some n
 8. Edit the new file `board.txt` and add the line `build.f_cpu=8000000L`
 9. Do `Build > Configuration Manager...` and set Active Solution Configuration to `Release`
 11. Optional: add to your new project a copy of Hardware.h, Hardware.cpp, MySerial.h, and MySerial.cpp. Use the initialization code and pin defintions in Hardware to help you run the board correctly.
-
-Debugger: I have not succeeded in using a debugger on the PAPR. If you figure out how to do it, please update this Readme with instructions.
 
 ### Setting up `avrdude`
 
@@ -109,6 +105,10 @@ This project uses the Arduino library "Low-Power 1.6". To ensure repeatable buil
 When the PCB is powered up, it is in a low power mode that requires the MCU to be at a low speed. This is why the fuse bytes are configured to set the MCU's clock speed to 1 MHz. The firmware will set the board to full power mode and bump up the clock speed after it initializes.
 
 The file `board.txt` is used by the compiler to define certain settings. For this project there is only one setting - the processor speed. By default, the compiler assumes a speed of 16 MHz, however we use a speed of 8 MHz. (FYI, there are several reasons for using a lower speed: 8 MHz doesn't require a crystal so we save a little bit of cost and we free up 2 pins on the MCU, the lower speed consumes less power, and our work is quite simple so we don't need a higher speed.)
+
+Unit testing: at present there is no automated testing of this code. However, the code is broken down into C++ classes in a way that would make it somewhat easy to add unit testing. The repo [markshepherd/papr-firmware](https://github.com/markshepherd/papr-firmware) has a branch "unittest" that contains some very-out-of-date experimental code for this.
+
+Debugger: I have not succeeded in using a debugger on the PAPR. If you figure out how to do it, please update this Readme with instructions.
 
 ### Development practices
 
