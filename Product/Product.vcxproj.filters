@@ -27,7 +27,7 @@
     <ClInclude Include="Main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Timer.h">
+    <ClInclude Include="OneTimeCallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MySerial.h">

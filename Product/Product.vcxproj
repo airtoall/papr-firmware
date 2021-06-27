@@ -118,7 +118,7 @@
     <ClInclude Include="Main.h" />
     <ClInclude Include="MySerial.h" />
     <ClInclude Include="Recorder.h" />
-    <ClInclude Include="Timer.h" />
+    <ClInclude Include="OneTimeCallback.h" />
     <ClInclude Include="__vm\.Product.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,7 @@
  * by the Arduino runtime (product environment) or by the unit test runtime (unit test environment).
  */
 #pragma once
-#include "Timer.h"
+#include "OneTimeCallback.h"
 #include "Battery.h"
 #include "PeriodicCallback.h"
 #ifdef UNITTEST
@@ -103,11 +103,11 @@ private:
     bool alertToggle;
 
     // The timer that pulses the lights and buzzer during an alert.
-    Timer alertTimer;
+    OneTimeCallback alertTimer;
 
     // The timer that does the reminder beeps when the battery gets below 15%.
     PeriodicCallback chargeReminder;
-    Timer beepTimer;
+    OneTimeCallback beepTimer;
 
     /********************************************************************
      * Etc.

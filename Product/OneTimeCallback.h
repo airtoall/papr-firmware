@@ -5,9 +5,9 @@
 
 extern unsigned long getMillis();
 
-class Timer {
+class OneTimeCallback {
 public:
-    Timer(void (*callback)()) : _intervalMillis(0), _callback(callback) {}
+    OneTimeCallback(void (*callback)()) : _intervalMillis(0), _callback(callback) {}
 
     // schedules a callback to occur at the specified time interval from now
     void start(unsigned int intervalMillis) {
