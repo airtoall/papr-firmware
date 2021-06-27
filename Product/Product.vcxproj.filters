@@ -48,6 +48,9 @@
     <ClInclude Include="PeriodicCallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PB2PWM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Hardware.cpp">
@@ -66,6 +69,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Recorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PB2PWM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

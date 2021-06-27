@@ -2,9 +2,9 @@
 
 This directory contains the firmware that runs the Air-To-All PAPR version 3.
 
-The firmware runs on the ATMega328p microcontroller chip (the "MCU") that is on the PAPR's PCB. Using the various pin inputs and output of the MCU, the firmware controls all the active components of the PAPR, including the buttons, LEDs, fan, buzzer, battery and charger. The firmware also has acceess to a serial port for text input/output for testing and debugging.
+The firmware runs on the ATMega328p microcontroller chip (the "MCU") that is on the PAPR's PCB. Using the various pin inputs and outputs of the MCU, the firmware monitors and controls all the active components of the PAPR, including the buttons, LEDs, fan, buzzer, battery and charger. The firmware also has acceess to a serial port for text input/output for testing and debugging.
 
-This is an Arduino-compatible app, written in C++. The app doesn't run on any actual arduino board, but we use Arduino as the base for this app so that we can take advantage of the Arduino APIs, Arduino libraries, and the Arduino community (forums, blogs, etc). If it became necessary to eliminate any Arduino dependencies, I think you could do it with a day or two of work.
+This is an Arduino-compatible app, written in C++. The app doesn't run on any actual arduino board, but we use the Arduino IDE and runtime as the base for this app so that we can take advantage of the Arduino APIs, Arduino libraries, and the Arduino community (forums, blogs, etc). If it became necessary to eliminate any Arduino dependencies, I think you could do it with a day or two of work.
 
 Unit testing: at present there is no automated testing of this code. However, the code is broken down into C++ classes in a way that would make it somewhat easy to add unit testing. This repo has a branch "unittest" that contains some very-out-of-date experimental code for this.
 
@@ -26,20 +26,29 @@ To compile or develop this code:
 
 In visual studio, open the solution file "Product.sln".
 
-To compile the code, use xxxxx, or F7.
+To compile the code, use `Build > Build Solution`.
 
 To download and run the code:
 1. make sure the PCB has power, either from the battery connector, or the charger connector.
 1. connect the AVRISPMKII's USB cable to your computer
 1. connect the AVRISPMKII's 6-pin SPI connector to the PCB's 6-pin SPI header
-1. use xxxxx, or F5, to compile and download
+1. use `Debug > Start Debugging`, to compile and download
 
 If the PCB's power is coming from the battery connector, you must disconnect the 6-pin SPI after downloading, in order to run the board. If power is coming from the charger connector, you can leave the SPI connected.
 
 If you want to create a new project to run on the PAPR's MCU (for example some new kind of test code, or some experimental code):
-1. in Visual Studio, do `File > New`
-2. board.txt
-3. you may want to add to your new project a copy of Hardware.h, Hardware.cpp, MySerial.h, and MySerial.cpp. The initialization code in Hardware will help you get the board correctly started up.
+1. in Visual Studio, do `File > New > Project`, or select `Create a New Project` from Visual Studio's start page
+2. choose `Arduino Empty Project` and click `Next`
+3. choose a project name and location, choose `Create New Solution`, and click `Create`
+4. Do `Extensions > vMicro` and set IDE to `Arduino 1.6/1.8`
+5. Do `Extensions > vMicro` and set Board to `ATMega328P (Old Bootloader) (Arduino Nano)`
+6. Do `Extensions > vMicro > Uploader` and set Hardware Programmer to `AVRISP mkII`
+7. Do `Extensions > vMicro > Add Code > Add Local Board.txt`
+8. Edit the new file `board.txt` and add the line `build.f_cpu=8000000L`
+9. Do `Build > Configuration Manager...` and set Active Solution Configuration to `Release`
+11. Optional: add to your new project a copy of Hardware.h, Hardware.cpp, MySerial.h, and MySerial.cpp. Use the initialization code and pin defintions in Hardware to help you run the board correctly.
+
+Debugger: I have not succeeded in using a debugger on the PAPR. If you figure out how to do it, please update this Readme with instructions.
 
 ### Setting up `avrdude`
 
@@ -103,7 +112,7 @@ The file `board.txt` is used by the compiler to define certain settings. For thi
 
 ### Development practices
 
-I am not going to write a list of best practices for coding because there are a million web sites that talk about this. The PAPR is a medical device and we need the code to be professional, high-quality, maintainable, and reliable. Please follow the naming, formatting, and commenting practices that you see in the code. Make sure your code is as clean and simple as possible. Make sure that other developers will be able to read and understand your code. Make sure you test your code thoroughly - once the product is delivered to the customer it is extremely difficult to fix bugs or update the code. If you find errors or omissions in this Readme, please update it to the next developer's life easier. If you add new features or change the behavior in any way, make sure to update, where applicable, the Specification, the Verification test suite (see links below), this readme file, and/or the comments in the code.
+I am not going to write a list of best practices for coding because there are a million web sites that talk about this. The PAPR is a medical device and we need the code to be professional, high-quality, maintainable, and reliable. Please follow the naming, formatting, and commenting practices that you see in the code. Make sure your code is as clean and simple as possible. Make sure that other developers will be able to read and understand your code. Make sure you test your code thoroughly - once the product is delivered to the customer it is extremely difficult to fix bugs or update the code. If you find errors or omissions in this Readme, please update it to make life easier for the next developer. If you add new features or change the behavior in any way, make sure to update, where applicable, the Specification, the Verification test suite (see links below), this readme file, and/or the comments in the code.
 
 ### Related documents
 

@@ -104,7 +104,7 @@ void Battery::updateBatteryTimers()
     if (isChargingNow && !prevIsCharging) {
         // we have just started charging
         chargeStartMilliSecs = hw.millis();
-        serialPrintf("Start charging at %ld", chargeStartMilliSecs);
+        //serialPrintf("Start charging at %ld", chargeStartMilliSecs);
     }
     prevIsCharging = isChargingNow;
 

@@ -11,6 +11,6 @@ void serialPrintf(const char* __fmt, ...);
 char* renderLongLong(long long num);
 #else
 #define serialInit()
-#define serialPrintf()
-#define renderLongLong()
+#define serialPrintf(...)
+#define renderLongLong(...)
 #endif
