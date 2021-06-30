@@ -31,7 +31,7 @@ To download and run the code:
 1. make sure the PCB has power, either from the battery connector, or the charger connector.
 1. connect the AVRISPMKII's USB cable to your computer
 1. connect the AVRISPMKII's 6-pin SPI connector to the PCB's 6-pin SPI header
-1. use `Debug > Start Debugging`, to compile and download
+1. use `Debug > Start Debugging`, to compile and download. (Because the configuration is `Release`, this does not actually start a debug session, it just runs the code).
 
 If the PCB's power is coming from the battery connector, you must disconnect the 6-pin SPI after downloading, in order to run the board. If power is coming from the charger connector, you can leave the SPI connected.
 
@@ -79,11 +79,10 @@ This configures the MCU clock to 8 MHz using the internal oscillator (no crystal
 
 ### Downloading firmware 
 
-When you are in Visual Studio, you can download firmware to the MCU using xxxx or F5, as described above.
+When you are in Visual Studio, you can download firmware to the MCU using `Debug > Start Debugging`, as described above.
 
 To download firmware from Command Prompt, do this:
-1. use visual studio to build the firmware. This creates a file called `Product.ino.hex`.
-2. find out where on your computer the file is
+1. use visual studio to build the firmware. This creates a file called `Product.ino.hex` in the `Product/Release` folder.
 3. copy `Product.ino.hex` to your `c:\avrdude` folder.
 1. `avrdude -c avrispmkII -p m328p "-Uflash:w:Product.ino.hex:i"`
 
