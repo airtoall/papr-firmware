@@ -9,7 +9,8 @@
  * All code must work when millis() and micros() wrap around
  * 
  * Once a battery is connected to the PCB, the system runs continuously forever. The 
- * only time we actually shut down is if the user completely drains the battery. 
+ * only time we actually shut down is if the user completely drains the battery, or the
+ * battery gets disconnected.
  */
 #include "Main.h"
 #include "PB2PWM.h"
@@ -528,7 +529,7 @@ Main::Main() :
         []() { instance->onToggleAlert(); }),
     beepTimer(
         []() { instance->onBeepTimer(); }),
-    chargeReminder(10000, 
+    chargeReminder(15000, 
         []() { instance->onChargeReminder(); }),
     statusReport(10000, 
         []() { instance->onStatusReport(); }),
@@ -665,10 +666,11 @@ void Main::loop()
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
     #ifdef SERIAL_ENABLED
-    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Charging,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%",
+    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charging,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%",
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
         (buzzerState == BUZZER_ON) ? "on" : "off",
         currentAlertName(),
+        chargeReminder.isActive() ? "yes" : "no",
         battery.isCharging() ? "yes" : "no",
         (ledState[0] == LED_ON) ? "red" : "---",
         (ledState[1] == LED_ON) ? "yellow" : "---",
