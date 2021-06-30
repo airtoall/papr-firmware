@@ -27,6 +27,7 @@ In visual studio, open the solution file "Product.sln".
 To compile the code, use `Build > Build Solution`.
 
 To download and run the code:
+1. in `Build > Configuration Manager...`, make sure Active Solution Configuration is `Release`
 1. make sure the PCB has power, either from the battery connector, or the charger connector.
 1. connect the AVRISPMKII's USB cable to your computer
 1. connect the AVRISPMKII's 6-pin SPI connector to the PCB's 6-pin SPI header
