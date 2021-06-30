@@ -5,7 +5,7 @@
 
 #define hw Hardware::instance
 
-FanController::FanController(byte sensorPin, unsigned int sensorThreshold, byte pwmPin)
+FanController::FanController(byte sensorPin, unsigned long sensorThreshold, byte pwmPin)
 {
 	_sensorPin = sensorPin;
 	_sensorThreshold = sensorThreshold;

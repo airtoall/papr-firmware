@@ -42,9 +42,6 @@
     <ClInclude Include="Battery.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Recorder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PeriodicCallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,9 +63,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Battery.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Recorder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PB2PWM.cpp">

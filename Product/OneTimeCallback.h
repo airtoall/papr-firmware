@@ -7,10 +7,10 @@ extern unsigned long getMillis();
 
 class OneTimeCallback {
 public:
-    OneTimeCallback(void (*callback)()) : _intervalMillis(0), _callback(callback) {}
+    OneTimeCallback(void (*callback)()) : _intervalMillis(0UL), _callback(callback) {}
 
     // schedules a callback to occur at the specified time interval from now
-    void start(unsigned int intervalMillis) {
+    void start(unsigned long intervalMillis) {
         _intervalMillis = intervalMillis;
         _intervalStartMillis = getMillis();
     }
@@ -18,13 +18,13 @@ public:
     // call this from loop()
     void update() {
         if (_intervalMillis && ((getMillis() - _intervalStartMillis) > _intervalMillis)) {
-            _intervalMillis = 0;
+            _intervalMillis = 0UL;
             (*_callback)();
         }
     }
 
     void cancel() {
-        _intervalMillis = 0;
+        _intervalMillis = 0UL;
     }
 
 private:

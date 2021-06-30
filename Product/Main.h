@@ -57,7 +57,7 @@ private:
     void allLEDsOn();
     void setLED(const int pin, int onOff);
     void setLEDs(const int* pinList, int onOff);
-    void flashAllLEDs(int millis, int count);
+    void flashAllLEDs(unsigned long millis, int count);
     void onToggleAlert();
     void onChargeReminder();
     void onStatusReport();
@@ -99,7 +99,7 @@ private:
      // Data used when an alert is active.
     Alert currentAlert;
     const int* currentAlertLEDs = nullptr;
-    const int* currentAlertMillis = nullptr;
+    const unsigned long* currentAlertMillis = nullptr;
     bool alertToggle;
 
     // The timer that pulses the lights and buzzer during an alert.

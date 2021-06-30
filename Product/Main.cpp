@@ -1,7 +1,8 @@
 /*
  * Main.cpp
  *
- * The main program of the PAPR product firmware.
+ * The main program of the PAPR product firmware. Here are some coding guidelines
+ * that will help minimize coding errors...
  * 
  * KEEP THE MAIN LOOP RUNNING AT ALL TIMES. DO NOT USE DELAY().
  * Be careful - this firmware keeps running even when the user does "Power Off".
@@ -11,6 +12,21 @@
  * Once a battery is connected to the PCB, the system runs continuously forever. The 
  * only time we actually shut down is if the user completely drains the battery, or the
  * battery gets disconnected.
+ * 
+ * Time intervals - be aware that millis() and micros() are unsigned 32 bit numbers that
+ * count up to 0xFFFFFFFF and then wrap around to 0. To correctly handle this wrap around,
+ * always check for interval expiry by doing "if (hw.millis() - startTime > intervalDuration)".
+ * All millisecond/microsecond intervals should be of type "unsigned long".
+ * All millisecond/microsecond literals should have the UL suffix, e.g. "unsigned long foo = 123UL;"
+ * To avoid confusion, variables that represent times or time intervals should be named "fooMillis" or "fooMicros".
+ * 
+ * Units - this code deals with many different kinds of data: milliseconds, amperes, volts, etc. 
+ * Make sure that all variables specify the precise units, e.g. "fooMilliVolts", "fooAmperes", "fooPicoCoulombs"
+ * 
+ * Data types - this code uses specific data types for different kinds of data, e.g. "unsigned long" for times,
+ * "long long" for charges in picoCoulombs, etc. Make sure to consistently use the correct data type for each variable,
+ * and make sure your literals have the correct suffix, e.g. "123LL" for long long, "123UL" for unsigned long.
+ * If you don't do this, the compiler will sometimes generate code that doesn't work the way you expect! Beware!
  */
 #include "Main.h"
 #include "PB2PWM.h"
@@ -26,7 +42,7 @@
 const char* STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
 
 // TODO make this automatically update during build process
-const char* PRODUCT_ID = "PAPR Rev 3.1 6/20/2021";
+const char* PRODUCT_ID = "PAPR Rev 3.1 6/30/2021";
 
 /********************************************************************
  * Fan constants
@@ -34,7 +50,7 @@ const char* PRODUCT_ID = "PAPR Rev 3.1 6/20/2021";
 
 // How many milliseconds should there be between readings of the fan speed. A smaller value will update
 // more often, while a higher value will give more accurate and smooth readings.
-const int FAN_SPEED_READING_INTERVAL = 1000;
+const unsigned long FAN_SPEED_READING_INTERVAL = 1000UL;
 
 // The duty cycle for each fan speed. Indexed by FanSpeed.
 const byte fanDutyCycles[] = { 0, 50, 100 };
@@ -66,22 +82,21 @@ const FanSpeed DEFAULT_FAN_SPEED = fanLow;
 
 // When we change the fan speed, allow at least this many milliseconds before checking the speed.
 // This gives the fan enough time to stabilize at the new speed.
-const int FAN_STABILIZE_MILLIS = 6000;
+const unsigned long FAN_STABILIZE_MILLIS = 6000UL;
 
 /********************************************************************
  * Button constants
  ********************************************************************/
 
 // The user must push a button for at least this many milliseconds.
-const int BUTTON_DEBOUNCE_MILLIS = 1000;
+const unsigned long BUTTON_DEBOUNCE_MILLIS = 1000UL;
 
 // The power off button needs a very short debounce interval,
 // so it can do a little song and dance before taking effect.
-const int POWER_OFF_BUTTON_DEBOUNCE_MILLIS = 50;
+const unsigned long POWER_OFF_BUTTON_DEBOUNCE_MILLIS = 50UL;
 
 // The power off button only takes effect if the user holds it pressed for at least this long.
-const int POWER_OFF_BUTTON_HOLD_MILLIS = 1000;
-
+const unsigned long POWER_OFF_BUTTON_HOLD_MILLIS = 1000UL;
 
 /********************************************************************
  * Alert constants
@@ -93,9 +108,9 @@ const int fanRPMLEDs[] = { FAN_LOW_LED_PIN, FAN_MED_LED_PIN, FAN_HIGH_LED_PIN, -
 const int* alertLEDs[] = { 0, batteryLowLEDs, fanRPMLEDs }; // Indexed by enum Alert.
 
 // What are the on & off durations for the pulsed lights and buzzer for each type of alert. 
-const int batteryAlertMillis[] = { 1000, 1000 };
-const int fanAlertMillis[] = { 200, 200 };
-const int* alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
+const unsigned long batteryAlertMillis[] = { 1000UL, 1000UL };
+const unsigned long fanAlertMillis[] = { 200UL, 200UL };
+const unsigned long* alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
 
 // Buzzer settings.
 const long BUZZER_FREQUENCY = 2500; // in Hz
@@ -150,7 +165,7 @@ void Main::setLEDs(const int* pinList, int onOff)
 }
 
 // Flash all the LEDS for a specified duration and number of flashes.
-void Main::flashAllLEDs(int millis, int count)
+void Main::flashAllLEDs(unsigned long millis, int count)
 {
     while (count--) {
         allLEDsOn();
@@ -266,7 +281,7 @@ void Main::updateBatteryLEDs() {
     bool redLED = (percentFull < 40);
     if (percentFull <= URGENT_BATTERY_PERCENT) {
         // The battery level is really low. Flash the LED.
-        bool ledToggle = (hw.millis() / 1000) & 1;
+        bool ledToggle = (hw.millis() / 1000UL) & 1;
         redLED = redLED && ledToggle;
     }
 
@@ -310,7 +325,7 @@ void Main::onChargeReminder() {
     serialPrintf("reminder beep");
     setBuzzer(BUZZER_ON);
     setLED(CHARGING_LED_PIN, LED_ON);
-    beepTimer.start(500);
+    beepTimer.start(500UL);
 }
 
 // This is the callback function for beepTimer. This function gets called to turn off the chargeReminder buzzer and LED. 
@@ -381,9 +396,9 @@ void Main::nap()
             return;
         }
 
-        long wakeupTime = hw.millis();
+        unsigned long wakeupTimeMillis = hw.millis();
         while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
-            if (hw.millis() - wakeupTime > 125) { // we're at 1/8 speed, so this is really 1000 ms (8 * 125)
+            if (hw.millis() - wakeupTimeMillis > 125UL) { // we're at 1/8 speed, so this is really 1000 ms (8 * 125)
                 hw.setPowerMode(fullPowerMode);
                 enterState(stateOn);
                 while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {}
@@ -529,9 +544,9 @@ Main::Main() :
         []() { instance->onToggleAlert(); }),
     beepTimer(
         []() { instance->onBeepTimer(); }),
-    chargeReminder(15000, 
+    chargeReminder(15000UL, 
         []() { instance->onChargeReminder(); }),
-    statusReport(10000, 
+    statusReport(10000UL, 
         []() { instance->onStatusReport(); }),
     fanController(FAN_RPM_PIN, FAN_SPEED_READING_INTERVAL, FAN_PWM_PIN),
     currentFanSpeed(fanLow),
@@ -552,7 +567,7 @@ void Main::setup()
 
     // Initialize the serial port and print some initial debug info.
     #ifdef SERIAL_ENABLED
-    delay(1000);
+    delay(1000UL);
     serialInit();
     serialPrintf("%s, MCUSR = %x", PRODUCT_ID, resetFlags);
     #endif
@@ -561,11 +576,11 @@ void Main::setup()
     PAPRState initialState;
     if (resetFlags & (1 << WDRF)) {
         // Watchdog timer expired. Tell the user that something unusual happened.
-        flashAllLEDs(100, 5);
+        flashAllLEDs(100UL, 5);
         initialState = stateOn;
     } else if (resetFlags == 0) {
         // Manual reset. Tell the user that something unusual happened.
-        flashAllLEDs(100, 10);
+        flashAllLEDs(100UL, 10);
         initialState = stateOn;
     } else {
         // It's a simple power-on. This will happen when:
@@ -666,7 +681,7 @@ void Main::loop()
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
     #ifdef SERIAL_ENABLED
-    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charging,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%",
+    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charging,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,millis,%lu,micros,%lu",
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
         (buzzerState == BUZZER_ON) ? "on" : "off",
         currentAlertName(),
@@ -682,7 +697,8 @@ void Main::onStatusReport() {
         (long)(hw.readMicroVolts() / 1000LL),
         (long)(hw.readMicroAmps() / 1000LL),
         (long)(battery.getPicoCoulombs() / 1000000000000LL),
-        getBatteryPercentFull());
+        getBatteryPercentFull(),
+        hw.millis(),hw.micros());
     #endif
 }
 

@@ -41,7 +41,7 @@
  */
 
 // Some parameters used by the coulomb counting algorithm.
-const int BATTERY_VOLTAGE_UPDATE_INTERVAL_MILLISECS = 500;
+const unsigned long BATTERY_VOLTAGE_UPDATE_INTERVAL_MILLISECS = 500UL;
 const unsigned long CHARGER_WINDDOWN_TIME_MILLIS = 1UL * 60UL * 1000UL; // 1 minute in milliseconds
 const long long CHARGE_MICRO_AMPS_WHEN_FULL = 200000LL; // 0.2 Amps
 const long long BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD = 100000LL; // 0.1 volts
@@ -79,7 +79,7 @@ long long Battery::estimatePicoCoulombsFromVoltage(long long microVolts) {
 // Function to initialize the coulomb counter. We can't do this in the Battery constructor,
 // because the constructor runs before the hardware is fully initialized.
 void Battery::initializeCoulombCount() {
-    picoCoulombs = constrain(estimatePicoCoulombsFromVoltage(hw.readMicroVolts()), 0, BATTERY_CAPACITY_PICO_COULOMBS);
+    picoCoulombs = constrain(estimatePicoCoulombsFromVoltage(hw.readMicroVolts()), 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
 }
 
 Battery::Battery()
@@ -113,7 +113,7 @@ void Battery::updateBatteryTimers()
     // This is probably not necessary because the readings are very stable, 
     // and because we already have a margin of slop.
     const long long lowPassFilterN = 100LL;
-    microVolts = ((microVolts * lowPassFilterN) + hw.readMicroVolts()) / (lowPassFilterN + 1);
+    microVolts = ((microVolts * lowPassFilterN) + hw.readMicroVolts()) / (lowPassFilterN + 1LL);
 
     if (abs(microVolts - prevMicroVolts) >= BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD) {
         // voltage has changed since last time we checked
@@ -133,7 +133,7 @@ void Battery::update()
     updateBatteryTimers();
 
     // TaKe a sample of the current. Read the clock and the current as close as possible to the same moment.
-    long long nowMicroSecs = hw.micros();
+    unsigned long nowMicroSecs = hw.micros();
     long long chargeFlowMicroAmps = hw.readMicroAmps();
     // Note: there is a lot of random variation in charge flow readings (maybe 5-10%).
     // This is not a problem because the data will get smoothed as we accumulate picoCoulombs
@@ -148,7 +148,7 @@ void Battery::update()
 
     // update our counter of the battery charge. Don't let the number get out of range.
     picoCoulombs = picoCoulombs + deltaPicoCoulombs;
-    picoCoulombs = constrain(picoCoulombs, 0, BATTERY_CAPACITY_PICO_COULOMBS);
+    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
  
     // if the battery is charging, and has now reached the maximum charge,
     // we will set the battery coulomb counter to 100% of the battery capacity.
@@ -169,7 +169,7 @@ void Battery::update()
         // *completely* finished. Let's see if we stay in the "charge finished" state
         // for a few seconds.
         if (maybeChargingFinished) {
-            if (nowMillis - maybeChargingFinishedMilliSecs > 5000L) {
+            if (nowMillis - maybeChargingFinishedMilliSecs > 5000UL) {
                 // We've been in "charge finished" state for long enough. It's now safe
                 // to assume that the battery is fully charged.
                 picoCoulombs = BATTERY_CAPACITY_PICO_COULOMBS;
@@ -187,6 +187,6 @@ void Battery::update()
 void Battery::DEBUG_incrementPicoCoulombs(long long increment)
 {
     picoCoulombs += increment;
-    picoCoulombs = constrain(picoCoulombs, 0, BATTERY_CAPACITY_PICO_COULOMBS);
+    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
 }
 

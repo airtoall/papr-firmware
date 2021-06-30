@@ -24,7 +24,7 @@ public:
     // releaseCallback: (optional) the function to call when the button is released
     PressDetector(int pin, unsigned long requiredMillis, void(*callback)(), void(*releaseCallback)() = 0)
         : _pin(pin), _requiredMillis(requiredMillis), _callback(callback), _releaseCallback(releaseCallback),
-        _currentState(BUTTON_RELEASED), _pressMillis(0), _callbackCalled(true) {}
+        _currentState(BUTTON_RELEASED), _pressMillis(0UL), _callbackCalled(true) {}
 
     void update()
     {

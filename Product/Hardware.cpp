@@ -4,7 +4,7 @@
 #include "Hardware.h"
 #include <avr/interrupt.h>
 
-Hardware::Hardware() :powerOnButtonInterruptCallback(0), fanRPMInterruptCallback(0), microAmps(0) { }
+Hardware::Hardware() :powerOnButtonInterruptCallback(0), fanRPMInterruptCallback(0), microAmps(0LL) { }
 
 Hardware Hardware::instance;
 
@@ -103,7 +103,7 @@ void Hardware::setClockPrescaler(int prescalerSelect)
 }
 
 long long Hardware::readMicroVolts() {
-    return ((long long)analogRead(BATTERY_VOLTAGE_PIN) * NANO_VOLTS_PER_VOLTAGE_UNIT) / 1000;
+    return ((long long)analogRead(BATTERY_VOLTAGE_PIN) * NANO_VOLTS_PER_VOLTAGE_UNIT) / 1000LL;
 }
 
 long long Hardware::readMicroAmps() {
@@ -112,7 +112,7 @@ long long Hardware::readMicroAmps() {
     long long readingMicroAmps = (((long long)(referenceReading - currentReading)) * NANO_AMPS_PER_CHARGE_FLOW_UNIT) / 1000LL;
 
     const long long lowPassFilterN = 10LL;
-    microAmps = ((microAmps * lowPassFilterN) + readingMicroAmps) / (lowPassFilterN + 1);
+    microAmps = ((microAmps * lowPassFilterN) + readingMicroAmps) / (lowPassFilterN + 1LL);
     return microAmps;
 }
 
@@ -198,7 +198,7 @@ void Hardware::setPowerMode(PowerMode mode)
         digitalWrite(BOARD_POWER_PIN, BOARD_POWER_ON);
 
         // Wait for things to settle down
-        delay(10);
+        delay(10UL);
 
         // Set the clock prescaler to give the max speed.
         setClockPrescaler(0);
@@ -212,7 +212,7 @@ void Hardware::setPowerMode(PowerMode mode)
         digitalWrite(BOARD_POWER_PIN, BOARD_POWER_OFF);
 
         // Wait for the PCB to fully switch to low power mode (Note: at 1/8 speed, 30 ms is really 240 ms).
-        delay(30);
+        delay(30LL);
 
         // We are now running at low power, low speed.
         /* TEMP */ //digitalWrite(FAN_MED_LED_PIN, LED_OFF);
