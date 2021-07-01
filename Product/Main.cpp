@@ -322,7 +322,7 @@ void Main::checkForBatteryAlert()
 // This is the callback function for chargeReminder. When it's active, this function gets called every minute or so.
 // We turn on the buzzer and the charging LED, then set a timer for when to turn buzzer and LED off.
 void Main::onChargeReminder() {
-    serialPrintf("reminder beep");
+    //serialPrintf("reminder beep");
     setBuzzer(BUZZER_ON);
     setLED(CHARGING_LED_PIN, LED_ON);
     beepTimer.start(500UL);

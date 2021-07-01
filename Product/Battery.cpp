@@ -60,17 +60,21 @@ void Battery::wakeUp() {
 }
 
 // Given a battery voltage, estimate how much charge is in the battery. This little ad-hoc
-// formula is based on measurements I made of a "typical" battery. You can see the raw data in
-// the "Time vs. Battery/Charger Voltage" and "Time vs. Battery Charge" charts of the document at
+// formula is roughly based on measurements I made of a brand-new battery, minus 2000 coulombs
+// to be conservative. You can see the raw data in the "Time vs. Battery/Charger Voltage"
+// and "Time vs. Battery Charge" charts of the document at
 // https://docs.google.com/spreadsheets/d/14-mchRN22HC6OSyAcN329NEcRRjF2_VMbKz3yHDDEoI
+//
+// Caveat: the relationship between voltage and state-of-charge in Li-ion batteries
+// is very unreliable. The best way to determine the true state-of-charge is to fully charge the battery.
 long long Battery::estimatePicoCoulombsFromVoltage(long long microVolts) {    
     const long milliVolts = ((long)microVolts) / 1000L;
     long coulombs;
 
     if (milliVolts >= 20000L) {
-        coulombs = 5000L + ((milliVolts - 20000L) * 4);
+        coulombs = 3000L + ((milliVolts - 20000L) * 4);
     } else {
-        coulombs = 2000L + (milliVolts - 16500L);
+        coulombs = (milliVolts - 16500L);
     }
 
     return ((long long)coulombs) * 1000000000000LL;

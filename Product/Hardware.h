@@ -115,9 +115,9 @@ const int SERIAL_TX_PIN = 1;          // PD1   output  Can be used by Serial, us
 
 // "long long" has 18-19 decimal digits of precision. Watch out for overflow!
 const long long NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;
-const long long NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;             // 0 to 1023 corresponds to 0 to 30 volts
-const long long BATTERY_CAPACITY_PICO_COULOMBS = 25200000000000000LL; // 25,200 coulombs // TODO fudge factor? probably 0.8
-const long long BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL; // 2,100 coulombs the minimum charge level // TODO fudge factor? probably 0.8
+const long long NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;              // 0 to 1023 corresponds to 0 to 30 volts
+const long long BATTERY_CAPACITY_PICO_COULOMBS = 22680000000000000LL;  // 25,200 coulombs (rated battery capacity) * 0.9 (fudge factor for when battery gets old)
+const long long BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL; // 2,100 coulombs the minimum charge level (the BMS shuts down the battery at this level)
 
 /*
 Here is a note from Brent Bolton about how AMPS_PER_CHARGE_FLOW_UNIT and VOLTS_PER_VOLTAGE_UNIT are determined:
