@@ -63,7 +63,7 @@ void beginSamplePeriod()
 
 void updateRecorder(unsigned int fanRPM, int currentDutyCycle, bool isCharging, long long picoCoulombs)
 {
-    if (hw.millis() - samplePeriodBeginMillis > 1000UL) {
+    if (hw.millis() - samplePeriodBeginMillis > 5000UL) {
         if (!skipReport) {
             long long batteryMilliVolts = voltage.average() * NANO_VOLTS_PER_VOLTAGE_UNIT / 1000000;
             int buzzerDutyCycle = (OCR1BH << 8) | OCR1BL;

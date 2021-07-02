@@ -70,10 +70,8 @@ void setFanDutyCycle(int dutyCycle)
     if (currentDutyCycle >= 0) {
         hw.digitalWrite(FAN_ENABLE_PIN, FAN_ON);
         fanController.setDutyCycle(dutyCycle);
-        battery.notifySystemActive(true);
     } else {
         hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
-        battery.notifySystemActive(false);
     }
     resetRecorder();
     serialPrintf("Duty cycle %d\r\n\r\n", dutyCycle);
@@ -139,7 +137,6 @@ void setup()
     hw.setPowerOnButtonInterruptCallback(&powerOnButtonInterruptCallback);
     //loopCount = 0;
     //startMillis = hw.millis();
-    battery.notifySystemActive(false);
 
     // test the long long datatype
     //#define LLONG_MAX 9223372036854775807LL

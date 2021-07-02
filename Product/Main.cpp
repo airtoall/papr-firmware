@@ -73,9 +73,9 @@ const unsigned int expectedFanRPM[] = { 7479, 16112, 22271 };
  100,   22215,  22327,   22271 
 */
 
-// How much tolerance do we give when checking for correct fan RPM. We allow +/- 5%.
-const float LOWEST_FAN_OK_RPM = 0.95;
-const float HIGHEST_FAN_OK_RPM = 1.05;
+// How much tolerance do we give when checking for correct fan RPM. We allow +/- 15%.
+const float LOWEST_FAN_OK_RPM = 0.85;
+const float HIGHEST_FAN_OK_RPM = 1.15;
 
 // The fan speed when we startup.
 const FanSpeed DEFAULT_FAN_SPEED = fanLow;
