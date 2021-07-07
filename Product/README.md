@@ -75,7 +75,7 @@ This will set the fuse bytes to:
 - high byte = 0xDA
 - extended byte = 0xFF
 
-This configures the MCU clock to 8 MHz using the internal oscillator (no crystal required), and sets the initial clock divider to 8, which results in a clock speed of 1 MHz. For more details on the fuse bytes, see the ATMega328p datasheet.
+These fuse bytes configure the MCU clock to 8 MHz using the internal oscillator (no crystal required), and set the initial clock divider to 8, which results in a clock speed of 1 MHz. For more details on the fuse bytes, see the ATMega328p datasheet.
 
 ### Downloading firmware 
 
@@ -84,7 +84,8 @@ When you are in Visual Studio, you can download firmware to the MCU using `Debug
 To download firmware from Command Prompt, do this:
 1. use visual studio to build the firmware. This creates a file called `Product.ino.hex` in the `Product/Release` folder.
 3. copy `Product.ino.hex` to your `c:\avrdude` folder.
-1. `avrdude -c avrispmkII -p m328p "-Uflash:w:Product.ino.hex:i"`
+4. OR choose an archived build `Product.ino.yyyymmdd.hex` from `Product/binaries`, and copy that to the avrdude folder.
+5. `avrdude -c avrispmkII -p m328p "-Uflash:w:Product.ino.yyyymmdd.hex:i"`
 
 ### Writing to the serial port
 
