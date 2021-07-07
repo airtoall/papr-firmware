@@ -42,7 +42,7 @@
 const char* STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
 
 // TODO make this automatically update during build process
-const char* PRODUCT_ID = "PAPR Rev 3.1 6/30/2021";
+const char* PRODUCT_ID = "PAPR Rev 3.1 7/7/2021";
 
 /********************************************************************
  * Fan constants

@@ -212,7 +212,7 @@ void Hardware::setPowerMode(PowerMode mode)
         digitalWrite(BOARD_POWER_PIN, BOARD_POWER_OFF);
 
         // Wait for the PCB to fully switch to low power mode (Note: at 1/8 speed, 30 ms is really 240 ms).
-        delay(30LL);
+        delay(30UL);
 
         // We are now running at low power, low speed.
         /* TEMP */ //digitalWrite(FAN_MED_LED_PIN, LED_OFF);
