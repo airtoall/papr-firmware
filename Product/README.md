@@ -87,6 +87,8 @@ To download firmware from Command Prompt, do this:
 4. OR choose an archived build `Product.ino.yyyymmdd.hex` from `Product/binaries`, and copy that to the avrdude folder.
 5. `avrdude -c avrispmkII -p m328p "-Uflash:w:Product.ino.yyyymmdd.hex:i"`
 
+Once firmware is installed, it will immediately start running. To make it run properly, you may need to disconnect the 6-pin programming connector.
+
 ### Writing to the serial port
 
 The serial port pins PD0 and PD1 are exposed via the PCB's serial header. To access the serial port from your computer:
