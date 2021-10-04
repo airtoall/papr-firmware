@@ -1,6 +1,6 @@
 #pragma once
 
-#undef SERIAL_ENABLED
+#define SERIAL_ENABLED
 // It's probably safe to #define SERIAL_ENABLED in the product build,
 // but it's unlikely to be used, and maybe could cause trouble somehow,
 // so I think it's better to #undef it in the product.
