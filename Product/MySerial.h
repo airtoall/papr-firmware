@@ -6,7 +6,7 @@
 // so I think it's better to #undef it in the product.
 
 #ifdef SERIAL_ENABLED
-void serialInit();
+void serialInit(bool inputAllowed);
 void serialPrintf(const char* __fmt, ...);
 char* renderLongLong(long long num);
 #else

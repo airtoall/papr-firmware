@@ -558,6 +558,18 @@ Main::Main() :
     instance = this;
 }
 
+bool shouldEnterTestMode() {
+    for (int i = 0; i < 30; i += 1) {
+        int input = Serial.peek();
+        if (input == 't' || input == 'T') {
+            Serial.read();
+            return true;
+        }
+        delay(100L);
+    }
+    return false;
+}
+
 // This function gets called once, when the MCU starts up.
 void Main::setup()
 {
@@ -565,22 +577,35 @@ void Main::setup()
     int resetFlags = hw.watchdogStartup();
     hw.setup();
 
+    flashAllLEDs(50UL, 1);
+
     // Initialize the serial port and print some initial debug info.
     #ifdef SERIAL_ENABLED
     delay(1000UL);
-    serialInit();
-    serialPrintf("%s, MCUSR = %x", PRODUCT_ID, resetFlags);
+    serialInit(true);
+    serialPrintf("%s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, resetFlags);
+    delay(1000UL);
     #endif
+
+    flashAllLEDs(50UL, 3);
+    if (shouldEnterTestMode()) {
+        serialPrintf("\r\n\n<<< Should enter test Mode >>>");
+    } else {
+        serialPrintf("\r\n\n<<< Normal Mode >>>");
+    }
+    Serial.end();
+    serialInit(false);
+    flashAllLEDs(50UL, 10);
 
     // Decide what state we should be in.
     PAPRState initialState;
     if (resetFlags & (1 << WDRF)) {
         // Watchdog timer expired. Tell the user that something unusual happened.
-        flashAllLEDs(100UL, 5);
+        flashAllLEDs(100UL, 10);
         initialState = stateOn;
     } else if (resetFlags == 0) {
         // Manual reset. Tell the user that something unusual happened.
-        flashAllLEDs(100UL, 10);
+        flashAllLEDs(300UL, 5);
         initialState = stateOn;
     } else {
         // It's a simple power-on. This will happen when:

@@ -25,14 +25,16 @@ void serialPrintf(const char* __fmt, ...) {
 	nextBuffer = 0;
 }
 
-void serialInit() {
+void serialInit(bool inputAllowed) {
 	Serial.begin(57600);
 
-	// Make sure the serial software doesn't try to use pin 0 to receive data,
-	// because that pin is being used as a digital input.
-	UCSR0B = UCSR0B & ~(1 << RXCIE0); // disable RX Complete Interrupt Enable
-	UCSR0B = UCSR0B & ~(1 << RXEN0); // disable USART Receiver.
-	pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
+	if (!inputAllowed) {
+		// Make sure the serial software doesn't try to use pin 0 to receive data,
+		// because that pin is being used as a digital input.
+		UCSR0B = UCSR0B & ~(1 << RXCIE0); // disable RX Complete Interrupt Enable
+		UCSR0B = UCSR0B & ~(1 << RXEN0); // disable USART Receiver.
+		pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
+	}
 }
 
 char* renderLongLong(long long num) {
