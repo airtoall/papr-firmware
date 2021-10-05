@@ -6,7 +6,7 @@ extern const char* PRODUCT_ID;
 const int numFanSpeeds = 3;
 
 // Human-readable names for the fan speeds.
-extern const char* FAN_SPEED_NAMES[];
+//extern const char* FAN_SPEED_NAMES[];
 
 // The duty cycle for each fan speed. Indexed by FanSpeed.
 extern const int fanDutyCycles[];

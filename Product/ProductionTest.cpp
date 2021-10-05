@@ -139,24 +139,39 @@ done:
  * Fan Test
  ********************************************************************/
 
+/*
+char* getFanSpeedName(int speed) {
+	switch (speed) {
+	case 0: return "Low";
+	case 1: return "Medium";
+	case 2: return "High";
+	}
+	return "??";
+}
+*/
+
 void testFan() {
 	serialPrintf("Fan Test");
-
-	FanController fanController(FAN_RPM_PIN, 100, FAN_PWM_PIN);
-	fanController.begin();
-	fanController.getRPM();
+	
+	//FanController fanController(FAN_RPM_PIN, 100, FAN_PWM_PIN);
+	//fanController.begin();
+	//fanController.getRPM();
 
 	while (true) {
-		hw.digitalWrite(FAN_ENABLE_PIN, FAN_ON);
+		//hw.digitalWrite(FAN_ENABLE_PIN, FAN_ON);
 		for (int speed = 0; speed < numFanSpeeds; speed += 1) {
-			fanController.setDutyCycle(fanDutyCycles[speed]);
-			serialPrintf("%s speed, duty cycle %d", FAN_SPEED_NAMES[speed], fanDutyCycles[speed]);
+			//fanController.setDutyCycle(fanDutyCycles[speed]);
+			serialPrintf("%s speed, duty cycle %d", 
+				(speed == 0) ? "lo" : ((speed == 1) ? "med" : "hi"), fanDutyCycles[speed]);
+				/*getFanSpeedName(speed)*/ /*FAN_SPEED_NAMES[speed]*/
+				// Both of the above cause the product to behave wierd. (Power Off causes a reset; status report fails to print every 5 seconds). Compiler bug?
 			for (int i = 0; i < 5; i += 1) {
 				pause(1000);
-				serialPrintf("   RPM %u, %ld milliAmps", fanController.getRPM(), getMilliAmps());
+				unsigned int rpm = 99; // fanController.getRPM();
+				serialPrintf("   RPM %u, %ld milliAmps", rpm, getMilliAmps());
 			}
 		}
-		hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
+		//hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
 		for (int i = 0; i < 8; i += 1) {
 			serialPrint(".");
 			pause(1000);
@@ -166,7 +181,8 @@ void testFan() {
 
 done:
 	//fanController.end();
-	hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
+	//hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
+	
 	serialPrintf("\r\nFan Test ended");
 }
 
@@ -381,7 +397,7 @@ void productionTestLoop() {
 	serialPrintf("");
 	switch(command) {
 		case '1': testLEDs(); break;
-		//case '2': testFan(); break;
+		case '2': testFan(); break;
 		case '3': testSpeaker(); break;
 		case '4': testButtons(); break;
 		case '5': testVoltageReference(); break;
