@@ -38,7 +38,7 @@ public:
     Main();
 
     // Arduino-style main loop
-    void setup();
+    bool setup();
     void loop();
 
     // The PressDetector object polls a pin, and calls a callback when the pin value changes.

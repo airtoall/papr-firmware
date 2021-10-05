@@ -18,6 +18,13 @@ void FanController::begin()
 	hw.digitalWrite(_sensorPin, HIGH);
 	setDutyCycle(100);
 	_attachInterrupt();
+	_lastMillis = hw.millis();
+	_lastReading = 0;
+}
+
+void FanController::end()
+{
+	_detachInterrupt();
 }
 
 unsigned int FanController::getRPM() {

@@ -112,12 +112,14 @@
     <ClInclude Include="FanController.h" />
     <ClInclude Include="Hardware.h" />
     <ClInclude Include="Battery.h" />
+    <ClInclude Include="MiscConstants.h" />
     <ClInclude Include="PB2PWM.h" />
     <ClInclude Include="PeriodicCallback.h" />
     <ClInclude Include="PressDetector.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="MySerial.h" />
     <ClInclude Include="OneTimeCallback.h" />
+    <ClInclude Include="ProductionTest.h" />
     <ClInclude Include="__vm\.Product.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
@@ -125,8 +127,10 @@
     <ClCompile Include="FanController.cpp" />
     <ClCompile Include="Hardware.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MiscConstants.cpp" />
     <ClCompile Include="MySerial.cpp" />
     <ClCompile Include="PB2PWM.cpp" />
+    <ClCompile Include="ProductionTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="board.txt" />

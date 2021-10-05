@@ -33,6 +33,7 @@
 #include <LowPower.h>
 #include "MySerial.h"
 #include "Hardware.h"
+#include "MiscConstants.h"
 
  // The Hardware object gives access to all the microcontroller hardware such as pins and timers. Please always use this object,
  // and never access any hardware or Arduino APIs directly. This gives us the option of using a fake hardware object for unit testing.
@@ -40,9 +41,6 @@
 
 // indexed by PAPRState
 const char* STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
-
-// TODO make this automatically update during build process
-const char* PRODUCT_ID = "PAPR Rev 3.1 7/7/2021";
 
 /********************************************************************
  * Fan constants
@@ -52,11 +50,6 @@ const char* PRODUCT_ID = "PAPR Rev 3.1 7/7/2021";
 // more often, while a higher value will give more accurate and smooth readings.
 const unsigned long FAN_SPEED_READING_INTERVAL = 1000UL;
 
-// The duty cycle for each fan speed. Indexed by FanSpeed.
-const byte fanDutyCycles[] = { 0, 50, 100 };
-
-// The expected RPM for each fan speed. Indexed by FanSpeed.
-const unsigned int expectedFanRPM[] = { 7479, 16112, 22271 };
 /* Here are measured values for fan RMP for the San Ace 9GA0412P3K011
    %    MIN     MAX     AVG
 
@@ -111,10 +104,6 @@ const int* alertLEDs[] = { 0, batteryLowLEDs, fanRPMLEDs }; // Indexed by enum A
 const unsigned long batteryAlertMillis[] = { 1000UL, 1000UL };
 const unsigned long fanAlertMillis[] = { 200UL, 200UL };
 const unsigned long* alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
-
-// Buzzer settings.
-const long BUZZER_FREQUENCY = 2500; // in Hz
-const int BUZZER_DUTYCYCLE = 50; // in percent
 
 // A "low battery" alarm is in effect whenever the battery level is at or below the "urgent" amount.
 // If a charger is connected then the red LED flashes until the level is above the urgent amount,
@@ -546,41 +535,61 @@ Main::Main() :
         []() { instance->onBeepTimer(); }),
     chargeReminder(15000UL, 
         []() { instance->onChargeReminder(); }),
-    statusReport(10000UL, 
+    statusReport(5000UL, 
         []() { instance->onStatusReport(); }),
     fanController(FAN_RPM_PIN, FAN_SPEED_READING_INTERVAL, FAN_PWM_PIN),
     currentFanSpeed(fanLow),
     fanSpeedRecentlyChanged(false),
-    ledState({ LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF}),
     buzzerState(BUZZER_OFF),
     currentAlert(alertNone)
 {
     instance = this;
+    for (int i = 0; i < numLEDs; i += 1) { ledState[i] = LED_OFF; }
 }
 
-// This function gets called once, when the MCU starts up.
-void Main::setup()
+bool shouldEnterTestMode() {
+    for (int i = 0; i < 30; i += 1) {
+        int input = Serial.peek();
+        if (input == 't' || input == 'T') {
+            while(Serial.peek() != -1) Serial.read();
+            return true;
+        }
+        delay(100L);
+    }
+    return false;
+}
+
+// This function gets called when the MCU is powered up. Returns true iff we should go into test mode.
+bool Main::setup()
 {
     // Make sure watchdog is off. Remember what kind of reset just happened. Setup the hardware.
     int resetFlags = hw.watchdogStartup();
     hw.setup();
+    stopPB2PWM();
+    flashAllLEDs(50UL, 3); // tell the user we are alive
 
-    // Initialize the serial port and print some initial debug info.
     #ifdef SERIAL_ENABLED
-    delay(1000UL);
-    serialInit();
-    serialPrintf("%s, MCUSR = %x", PRODUCT_ID, resetFlags);
+    // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
+    serialInit(true);
+    serialPrintf("%s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, resetFlags);
+    if (shouldEnterTestMode()) {
+        return true;
+    }
+    // The user doesn't want test mode.
+    serialPrintln(F("\r\n\n<<< Normal Mode >>>"));
+    Serial.end();
+    serialInit(false); // RE-initialize the serial port with input disabled. This frees up the input pin to be used as the Charger Connected signal.
     #endif
 
     // Decide what state we should be in.
     PAPRState initialState;
     if (resetFlags & (1 << WDRF)) {
         // Watchdog timer expired. Tell the user that something unusual happened.
-        flashAllLEDs(100UL, 5);
+        flashAllLEDs(100UL, 10);
         initialState = stateOn;
     } else if (resetFlags == 0) {
         // Manual reset. Tell the user that something unusual happened.
-        flashAllLEDs(100UL, 10);
+        flashAllLEDs(300UL, 5);
         initialState = stateOn;
     } else {
         // It's a simple power-on. This will happen when:
@@ -609,6 +618,7 @@ void Main::setup()
     battery.initializeCoulombCount();
     enterState(initialState);
     statusReport.start();
+    return false;
 }
 
 // Call the update() function of everybody who wants to do something each time through the loop() function.
