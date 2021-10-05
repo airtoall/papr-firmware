@@ -370,8 +370,6 @@ void productionTestSetup() {
 	serialPrintf("6 - Battery Voltage test");
 	serialPrintf("7 - Charger Detect test");
 	serialPrintf("8 - Current Sensor test");
-	serialPrintf("r - Reset");
-	// serialPrintf("p - All tests pass, exit Production Test");
 }
 
 void productionTestLoop() {
@@ -389,8 +387,6 @@ void productionTestLoop() {
 		case '6': testBatteryVoltage(); break;
 		case '7': testChargerDetect(); break;
 		case '8': testCurrentSensor(); break;
-		case 'r': hw.reset(); break;
-		// case 'p': exitProductionTest(); break;
 		default: serialPrintf("Unknown command '%c'", command); break;
 	}
 }

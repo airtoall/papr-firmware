@@ -559,7 +559,7 @@ bool shouldEnterTestMode() {
     return false;
 }
 
-// This function gets called when the MCU is powered up.
+// This function gets called when the MCU is powered up. Returns true iff we should go into test mode.
 bool Main::setup()
 {
     // Make sure watchdog is off. Remember what kind of reset just happened. Setup the hardware.
