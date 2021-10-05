@@ -7,6 +7,7 @@
 // #include "EEProm.h"
 // #include <EEPROM.h>
 #include "MiscConstants.h"
+#include "WString.h"
 
 
 /********************************************************************
@@ -18,8 +19,13 @@
 // https://www.avrfreaks.net/forum/tut-c-using-eeprom-memory-avr-gcc?name=PNphpBB2&file=viewtopic&t=38417
 // https://cse537-2011.blogspot.com/2011/02/accessing-internal-eeprom-on-atmega328p.html
 
-void serialPrint(const char* const string) {
+void serialPrint(const __FlashStringHelper* string) {
 	Serial.print(string);
+	Serial.flush();
+}
+
+void serialPrintln(const __FlashStringHelper* string) {
+	Serial.println(string);
 	Serial.flush();
 }
 
@@ -114,76 +120,62 @@ void setLEDs(const byte* pinList, int count, int onOff)
 }
 
 void testLEDs() {
-	serialPrintf("LED Test");
+	serialPrintln(F("LED Test"));
 	while (true) {
 		for (int i = 0; i < numLEDs; i += 1) {
 			setLED(LEDpins[i], LED_ON);
-			serialPrint(".");
+			serialPrint(F("."));
 			pause(1000);
 			setLED(LEDpins[i], LED_OFF);
 		}
 		setLEDs(LEDpins, numLEDs, LED_ON);
-		serialPrint(".");
+		serialPrint(F("."));
 		pause(2000);
 		setLEDs(LEDpins, numLEDs, LED_OFF);
-		serialPrint(".");
+		serialPrint(F("."));
 		pause(1000);
 	}
 
 done:
 	setLEDs(LEDpins, numLEDs, LED_OFF);
-	serialPrintf("\r\nLED Test ended");
+	serialPrintln(F("\r\nLED Test ended"));
 }
 
 /********************************************************************
  * Fan Test
  ********************************************************************/
 
-/*
-char* getFanSpeedName(int speed) {
-	switch (speed) {
-	case 0: return "Low";
-	case 1: return "Medium";
-	case 2: return "High";
-	}
-	return "??";
-}
-*/
-
 void testFan() {
-	serialPrintf("Fan Test");
+	serialPrintln(F("Fan Test"));
 	
-	//FanController fanController(FAN_RPM_PIN, 100, FAN_PWM_PIN);
-	//fanController.begin();
-	//fanController.getRPM();
+	FanController fanController(FAN_RPM_PIN, 100, FAN_PWM_PIN);
+	fanController.begin();
+	fanController.getRPM();
 
 	while (true) {
-		//hw.digitalWrite(FAN_ENABLE_PIN, FAN_ON);
+		hw.digitalWrite(FAN_ENABLE_PIN, FAN_ON);
 		for (int speed = 0; speed < numFanSpeeds; speed += 1) {
-			//fanController.setDutyCycle(fanDutyCycles[speed]);
-			serialPrintf("%s speed, duty cycle %d", 
-				(speed == 0) ? "lo" : ((speed == 1) ? "med" : "hi"), fanDutyCycles[speed]);
-				/*getFanSpeedName(speed)*/ /*FAN_SPEED_NAMES[speed]*/
-				// Both of the above cause the product to behave wierd. (Power Off causes a reset; status report fails to print every 5 seconds). Compiler bug?
+			fanController.setDutyCycle(fanDutyCycles[speed]);
+			serialPrintf("%s speed, duty cycle %d", FAN_SPEED_NAMES[speed], fanDutyCycles[speed]);
 			for (int i = 0; i < 5; i += 1) {
 				pause(1000);
-				unsigned int rpm = 99; // fanController.getRPM();
+				unsigned int rpm = fanController.getRPM();
 				serialPrintf("   RPM %u, %ld milliAmps", rpm, getMilliAmps());
 			}
 		}
-		//hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
+		hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
 		for (int i = 0; i < 8; i += 1) {
-			serialPrint(".");
+			serialPrint(F("."));
 			pause(1000);
 		}
-		serialPrintf("");
+		serialPrintln(F(""));
 	}
 
 done:
-	//fanController.end();
-	//hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
+	fanController.end();
+	hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
 	
-	serialPrintf("\r\nFan Test ended");
+	serialPrintln(F("\r\nFan Test ended"));
 }
 
 /********************************************************************
@@ -191,11 +183,11 @@ done:
  ********************************************************************/
 
 void testSpeaker() {
-	serialPrintf("Speaker Test");
+	serialPrintln(F("Speaker Test"));
 	startPB2PWM(BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
 	for (int i = 0; i < 12; i += 1) {
 		for (int j = 0; j < 5; j += 1) {
-			serialPrint(".");
+			serialPrint(F("."));
 			pause(1000);
 		}
 		serialPrintf("\r\n%ld milliAmps", getMilliAmps());
@@ -203,7 +195,7 @@ void testSpeaker() {
 
 done:
 	stopPB2PWM();
-	serialPrintf("\r\nSpeaker Test ended");
+	serialPrintln(F("\r\nSpeaker Test ended"));
 }
 
 /********************************************************************
@@ -211,11 +203,11 @@ done:
  ********************************************************************/
 
 void testButtons() {
-	serialPrintf("Button Test");
+	serialPrintln(F("Button Test"));
 
 	setLEDs(LEDpins, numLEDs, LED_OFF);
 	while (true) {
-		serialPrint(".");
+		serialPrint(F("."));
 		for (int i = 0; i < 20; i += 1) {
 			setLED(LEDpins[0], (hw.digitalRead(POWER_OFF_PIN) == BUTTON_PUSHED) ? LED_ON : LED_OFF);
 			setLED(LEDpins[2], (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) ? LED_ON : LED_OFF);
@@ -227,7 +219,7 @@ void testButtons() {
 
 done:
 	setLEDs(LEDpins, numLEDs, LED_OFF);
-	serialPrintf("\r\nButton Test ended");
+	serialPrintln(F("\r\nButton Test ended"));
 }
 
 /********************************************************************
@@ -236,7 +228,7 @@ done:
 
 
 void testVoltageReference() {
-	serialPrintf("Voltage Reference Test");
+	serialPrintln(F("Voltage Reference Test"));
 	while (true) {
 		// Here's a note from Brent Bolton: this value is calculated as follows:
 		//      ADC reference voltage * PC1_count / 2**ADC_BITS
@@ -254,7 +246,7 @@ void testVoltageReference() {
 	}
 
 done:
-	serialPrintf("\r\nVoltage Reference Test ended");
+	serialPrintln(F("\r\nVoltage Reference Test ended"));
 }
 
 /********************************************************************
@@ -262,14 +254,14 @@ done:
  ********************************************************************/
 
 void testBatteryVoltage() {
-	serialPrintf("Battery Voltage Test");
+	serialPrintln(F("Battery Voltage Test"));
 	while (true) {
 		serialPrintf("%ld milliVolts", (long)(hw.readMicroVolts() / 1000LL));
 		pause(1000);
 	}
 
 done:
-	serialPrintf("\r\nBattery Voltage Test ended");
+	serialPrintln(F("\r\nBattery Voltage Test ended"));
 }
 
 /********************************************************************
@@ -277,7 +269,7 @@ done:
  ********************************************************************/
 
 void testChargerDetect() {
-	serialPrintf("Charger Detect Test");
+	serialPrintln(F("Charger Detect Test"));
 
 	Serial.end();
 	//UCSR0B = UCSR0B & ~(1 << RXCIE0); // disable RX Complete Interrupt Enable
@@ -303,7 +295,7 @@ void testChargerDetect() {
 	setLEDs(LEDpins, numLEDs, LED_OFF);
 
 	serialInit(true);
-	serialPrintf("\r\nCharger Detect Test ended");
+	serialPrintln(F("\r\nCharger Detect Test ended"));
 }
 
 /********************************************************************
@@ -311,7 +303,7 @@ void testChargerDetect() {
  ********************************************************************/
 
 void testCurrentSensor() {
-	serialPrintf("Current Sensor Test");
+	serialPrintln(F("Current Sensor Test"));
 
 	while (true) {
 		pause(1000);
@@ -319,7 +311,7 @@ void testCurrentSensor() {
 	}
 
 done:
-	serialPrintf("\r\nCurrent Sensor Test ended");
+	serialPrintln(F("\r\nCurrent Sensor Test ended"));
 }
 
 /********************************************************************
@@ -378,23 +370,23 @@ void productionTestSetup() {
 	// serialInit(true);
 	hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
 
-	serialPrintf("\r\n\n<<< Test Mode >>>");
-	serialPrintf("Commands are:");
-	serialPrintf("1 - LED test");
-	serialPrintf("2 - Fan test");
-	serialPrintf("3 - Speaker test");
-	serialPrintf("4 - Button test");
-	serialPrintf("5 - Voltage Reference test");
-	serialPrintf("6 - Battery Voltage test");
-	serialPrintf("7 - Charger Detect test");
-	serialPrintf("8 - Current Sensor test");
-	serialPrintf("r - Restart");
+	serialPrintln(F("\r\n\n<<< Test Mode >>>"));
+	serialPrintln(F("Commands are:"));
+	serialPrintln(F("1 - LED test"));
+	serialPrintln(F("2 - Fan test"));
+	serialPrintln(F("3 - Speaker test"));
+	serialPrintln(F("4 - Button test"));
+	serialPrintln(F("5 - Voltage Reference test"));
+	serialPrintln(F("6 - Battery Voltage test"));
+	serialPrintln(F("7 - Charger Detect test"));
+	serialPrintln(F("8 - Current Sensor test"));
+	serialPrintln(F("r - Restart"));
 }
 
 void productionTestLoop() {
-	serialPrintf("\r\nEnter Test Command:");
+	serialPrintln(F("\r\nEnter Test Command:"));
 	int command = getNextCommand();
-	serialPrintf("");
+	serialPrintln(F(""));
 	switch(command) {
 		case '1': testLEDs(); break;
 		case '2': testFan(); break;
