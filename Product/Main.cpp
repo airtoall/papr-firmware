@@ -540,18 +540,18 @@ Main::Main() :
     fanController(FAN_RPM_PIN, FAN_SPEED_READING_INTERVAL, FAN_PWM_PIN),
     currentFanSpeed(fanLow),
     fanSpeedRecentlyChanged(false),
-    ledState({ LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF}),
     buzzerState(BUZZER_OFF),
     currentAlert(alertNone)
 {
     instance = this;
+    for (int i = 0; i < numLEDs; i += 1) { ledState[i] = LED_OFF; }
 }
 
 bool shouldEnterTestMode() {
     for (int i = 0; i < 30; i += 1) {
         int input = Serial.peek();
         if (input == 't' || input == 'T') {
-            Serial.read();
+            while(Serial.peek() != -1) Serial.read();
             return true;
         }
         delay(100L);
@@ -565,25 +565,21 @@ bool Main::setup()
     // Make sure watchdog is off. Remember what kind of reset just happened. Setup the hardware.
     int resetFlags = hw.watchdogStartup();
     hw.setup();
+    stopPB2PWM();
+    flashAllLEDs(50UL, 3); // tell the user we are alive
 
-    flashAllLEDs(50UL, 1);
-
-    // Initialize the serial port and print some initial debug info.
     #ifdef SERIAL_ENABLED
-    delay(1000UL);
+    // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialInit(true);
     serialPrintf("%s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, resetFlags);
-    delay(1000UL);
-    #endif
-
-    flashAllLEDs(50UL, 3);
     if (shouldEnterTestMode()) {
         return true;
     }
-    serialPrintf("\r\n\n<<< Normal Mode >>>");
+    // The user doesn't want test mode.
+    serialPrintln(F("\r\n\n<<< Normal Mode >>>"));
     Serial.end();
-    serialInit(false);
-    flashAllLEDs(50UL, 10);
+    serialInit(false); // RE-initialize the serial port with input disabled. This frees up the input pin to be used as the Charger Connected signal.
+    #endif
 
     // Decide what state we should be in.
     PAPRState initialState;

@@ -25,6 +25,16 @@ void serialPrintf(const char* __fmt, ...) {
 	nextBuffer = 0;
 }
 
+void serialPrint(const __FlashStringHelper* string) {
+	Serial.print(string);
+	Serial.flush();
+}
+
+void serialPrintln(const __FlashStringHelper* string) {
+	Serial.println(string);
+	Serial.flush();
+}
+
 void serialInit(bool inputAllowed) {
 	Serial.begin(57600);
 

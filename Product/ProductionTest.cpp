@@ -1,14 +1,36 @@
-// ProductionTest.cpp
+/* ProductionTest.cpp
+* 
+* This file contains a set of tests that exercise our printed circuit board. 
+* The tests are described in detail in the document "Production Test.pdf", 
+* located in https://github.com/airtoall/papr-firmware/tree/master/Product/Docs
+* 
+* Every time the MCU is reset or powered up, it listens on the serial port for a few seconds.
+* If there is a terminal connected to the serial port and the the user types "T"
+* during that interval, we enter "test mode", in which the function
+* productionTestSetup() gets called once, and then productionTestLoop() gets called
+* repeatedly. The loop function listens for the user to type in a one-character command, and 
+* then performs the command. The user observes the output on the serial port, along with
+* the LEDs, the buzzer, the fan, the power supply, etc, and decides whether
+* the board is working properly. When the user is finished running
+* tests, they can power down the board, or use the "r" command to reset the firmware.
+* 
+* Commands typically run forever, and use pause() to periodically
+* check if the user has hit a key to stop the command. While a command is
+* running, it gives periodic feedback on the terminal and/or LEDs, to give the
+* user a warm feeling that something is happening.
+* 
+* A note on the "F()" macro: this macro tells the compiler to leave the string
+* in flash memory, and not copy it to RAM before use as it would usually do.
+* Using F() reduces the amount of RAM needed by this firmware. If we don't 
+* use F(), then we actually run out of RAM (with no warning!) and the firmware
+* starts behaving erratically.
+*/
 
 #include "PB2PWM.h"
 #include "MySerial.h"
 #include "Hardware.h"
 #include "FanController.h"
-// #include "EEProm.h"
-// #include <EEPROM.h>
 #include "MiscConstants.h"
-#include "WString.h"
-
 
 /********************************************************************
  * Misc definitions
@@ -16,48 +38,11 @@
 
 #define hw Hardware::instance
 
-// https://www.avrfreaks.net/forum/tut-c-using-eeprom-memory-avr-gcc?name=PNphpBB2&file=viewtopic&t=38417
-// https://cse537-2011.blogspot.com/2011/02/accessing-internal-eeprom-on-atmega328p.html
-
-void serialPrint(const __FlashStringHelper* string) {
-	Serial.print(string);
-	Serial.flush();
-}
-
-void serialPrintln(const __FlashStringHelper* string) {
-	Serial.println(string);
-	Serial.flush();
-}
-
-//bool shouldEnterTestMode() {
-//	testMode = false;
-//
-//	//uint8_t runMode = eeprom_read_byte(RUN_MODE_ADDR);
-//	uint8_t runMode = EEPROM.read(RUN_MODE_ADDR);
-//	if (runMode != NORMAL_MODE_FLAG) {
-//		testMode = true;
-//	} 
-//
-//	/*else {
-//    	hw.pinMode(POWER_OFF_PIN, INPUT_PULLUP);
-//		hw.pinMode(POWER_ON_PIN, INPUT_PULLUP);
-//		hw.pinMode(FAN_DOWN_PIN, INPUT_PULLUP);
-//		hw.pinMode(FAN_UP_PIN, INPUT_PULLUP);
-//
-//		testMode = hw.digitalRead(POWER_OFF_PIN) == BUTTON_PUSHED
-//			      && hw.digitalRead(POWER_ON_PIN)  == BUTTON_PUSHED
-//			      && hw.digitalRead(FAN_DOWN_PIN)  == BUTTON_RELEASED
-//			      && hw.digitalRead(FAN_UP_PIN)    == BUTTON_RELEASED;
-//	}*/
-//	return testMode;
-//}
-//
-//bool inTestMode() {
-//	return testMode;
-//}
-
 long getMilliAmps() {
+	// Do several consecutive readings, so that the low-pass filter in
+	// readMicroAmps() will smooth out any jitter in the readings.
 	for (int j = 0; j < 20; j += 1) hw.readMicroAmps();
+
 	return (long)(hw.readMicroAmps() / -1000LL);
 }
 
@@ -69,15 +54,26 @@ bool isLineEnd(int c) {
 	return (c == 10) || (c == 13);
 }
 
+// Reads a one-character command from the serial port. We skip over and ignore any
+// line-end characters, and also any characters on a line after the command character.
 int getNextCommand() {
+	// Loop until we find a command
 	while (true) {
 		int c;
+
+		// Skip over line-ends
 		while (c = Serial.peek(), isLineEnd(c)) {
 			Serial.read();
 		}
 		if (c != -1) {
+			// Grab the command character
 			int result = Serial.read();
-			hw.delay(100);
+
+			// Some terminal apps send each character as soon as it is typed. Other
+			// terminal apps save up typed characters and sends them when the user hits "enter".
+			// In case we are talking to the latter, we will delay for a moment, and
+			// then discard any other characters on the same line as the command.
+			hw.delay(100L);
 			while (Serial.peek() != -1) {
 				Serial.read();
 			}
@@ -87,14 +83,16 @@ int getNextCommand() {
 	}
 }
 
+// When a command is in progress, you should call this function to periodically check 
+// if the user has hit any character, which tells us to stop the command.
 bool doPause(int waitTimeMillis) {
 	while (waitTimeMillis > 0) {
 		if (Serial.peek() != -1) {
-			hw.delay(100);
+			hw.delay(100L);
 			while (Serial.peek() != -1) Serial.read();
 			return false;
 		}
-		hw.delay(50);
+		hw.delay(50L);
 		waitTimeMillis -= 50;
 	}
 	return true;
@@ -148,7 +146,7 @@ done:
 void testFan() {
 	serialPrintln(F("Fan Test"));
 	
-	FanController fanController(FAN_RPM_PIN, 100, FAN_PWM_PIN);
+	FanController fanController(FAN_RPM_PIN, 100L, FAN_PWM_PIN);
 	fanController.begin();
 	fanController.getRPM();
 
@@ -230,7 +228,8 @@ done:
 void testVoltageReference() {
 	serialPrintln(F("Voltage Reference Test"));
 	while (true) {
-		// Here's a note from Brent Bolton: this value is calculated as follows:
+		// Here's a note from Brent Bolton: the printout from this test
+		// is the current sensor reference voltage, which is calculated as follows:
 		//      ADC reference voltage * PC1_count / 2**ADC_BITS
 		// The ADC reference voltage is usually selectable in the ADC setup, but typically
 		// defaults to the power supply voltage, which is 5000 milliVolts in our case. All
@@ -271,23 +270,23 @@ done:
 void testChargerDetect() {
 	serialPrintln(F("Charger Detect Test"));
 
-	Serial.end();
-	//UCSR0B = UCSR0B & ~(1 << RXCIE0); // disable RX Complete Interrupt Enable
-	//UCSR0B = UCSR0B & ~(1 << RXEN0); // disable USART Receiver.
+	// The serial port input pin is the same pin as the Charger Connected indicator. 
+	// Temporarily disable the serial port and enable the charger connected indication.
+	Serial.end(); 
 	hw.pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
 
 	setLEDs(LEDpins, numLEDs, LED_OFF);
 	bool toggle = false;
-	for (int i = 0; i < 200; i += 1) {
-		bool connected = hw.digitalRead(CHARGER_CONNECTED_PIN) == CHARGER_CONNECTED;
-		if (connected) {
-			serialPrintf("connected, cc pin %d", hw.digitalRead(CHARGER_CONNECTED_PIN));
-		}
-		setLED(LEDpins[0], connected ? LED_ON : LED_OFF);
-		setLED(LEDpins[numLEDs - 1], connected ? LED_ON : LED_OFF);
+	// We can't print dots right now, so we will flash LED number 3 as the warm feeling indicator for this test.
+	// Since the serial port is disabled, we cannot end the test when the user hits a key. 
+	// Instead, we will end the test when the connected signal has not been received for 4 seconds (i.e. 80 * 50 milliseconds).
+	for (int i = 0; i < 80; i += 1) {
 		toggle = !toggle;
 		setLED(LEDpins[3], toggle ? LED_ON : LED_OFF);
-		hw.delay(50);
+		hw.delay(50L);
+		bool connected = hw.digitalRead(CHARGER_CONNECTED_PIN) == CHARGER_CONNECTED;
+		setLED(LEDpins[0], connected ? LED_ON : LED_OFF);
+		setLED(LEDpins[numLEDs - 1], connected ? LED_ON : LED_OFF);
 		if (connected) {
 			i = 0;
 		}
@@ -315,59 +314,10 @@ done:
 }
 
 /********************************************************************
- * 
- ********************************************************************/
-
-// void exitProductionTest() {
-// 	serialPrintf("\r\Production Test marked 'PASSED'. Test Mode is terminated, future boots will be Normal Mode.");
-// 
-// 	EEPROM.write(RUN_MODE_ADDR, NORMAL_MODE_FLAG);
-// 	//eeprom_write_byte(RUN_MODE_ADDR, NORMAL_MODE_FLAG);
-// }
-
-/********************************************************************
  * Setup and loop
  ********************************************************************/
 
-/*
 void productionTestSetup() {
-	hw.watchdogStartup();
-	hw.setPowerMode(fullPowerMode);
-
-	hw.pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
-	hw.pinMode(CHARGING_LED_PIN, OUTPUT);
-	hw.pinMode(BATTERY_LED_LOW_PIN, OUTPUT);
-	hw.pinMode(FAN_UP_PIN, INPUT_PULLUP);
-	hw.pinMode(FAN_HIGH_LED_PIN, OUTPUT);
-	DDRB |= (1 << DDB6); // pinMode(FAN_ENABLE_PIN, OUTPUT); // we can't use pinMode because it doesn't support pin PB6
-
-	hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
-}
-
-void productionTestLoop() {
-	int count = 0;
-	bool toggle = false;
-	while (true) {
-		if (++count == 10000) {
-			hw.digitalWrite(BATTERY_LED_LOW_PIN, toggle ? LED_ON : LED_OFF);
-			count = 0;
-			toggle = !toggle;
-		}
-
-		bool connected = hw.digitalRead(CHARGER_CONNECTED_PIN) == CHARGER_CONNECTED;
-		hw.digitalWrite(CHARGING_LED_PIN, connected ? LED_ON : LED_OFF);
-
-		bool buttonPushed = hw.digitalRead(FAN_UP_PIN) == BUTTON_PUSHED;
-		hw.digitalWrite(FAN_HIGH_LED_PIN, buttonPushed ? LED_ON : LED_OFF);
-	}
-}
-*/
-
-void productionTestSetup() {
-	// hw.setup();
-	// hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
-	// delay(1000UL);
-	// serialInit(true);
 	hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
 
 	serialPrintln(F("\r\n\n<<< Test Mode >>>"));
@@ -380,7 +330,7 @@ void productionTestSetup() {
 	serialPrintln(F("6 - Battery Voltage test"));
 	serialPrintln(F("7 - Charger Detect test"));
 	serialPrintln(F("8 - Current Sensor test"));
-	serialPrintln(F("r - Restart"));
+	serialPrintln(F("r - Reset"));
 }
 
 void productionTestLoop() {
@@ -394,7 +344,7 @@ void productionTestLoop() {
 		case '4': testButtons(); break;
 		case '5': testVoltageReference(); break;
 		case '6': testBatteryVoltage(); break;
-		//case '7': testChargerDetect(); break;
+		case '7': testChargerDetect(); break;
 		case '8': testCurrentSensor(); break;
 		case 'r': hw.reset(); break;
 		default: serialPrintf("Unknown command '%c'", command); break;
