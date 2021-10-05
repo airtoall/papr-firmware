@@ -8,13 +8,22 @@
  * but in theory we can/should do it sometime).
  */
 #include "Main.h"
+#include "ProductionTest.h"
 
 Main paprMain;
+bool inTestMode;
 
 void setup() {
-    paprMain.setup();
+    inTestMode = paprMain.setup();
+    if (inTestMode) {
+        productionTestSetup();
+    }
 }
 
 void loop() {
-    paprMain.loop();
+    if (inTestMode) {
+        productionTestLoop();
+    } else {
+        paprMain.loop();
+    }
 }

@@ -33,6 +33,7 @@
 #include <LowPower.h>
 #include "MySerial.h"
 #include "Hardware.h"
+#include "MiscConstants.h"
 
  // The Hardware object gives access to all the microcontroller hardware such as pins and timers. Please always use this object,
  // and never access any hardware or Arduino APIs directly. This gives us the option of using a fake hardware object for unit testing.
@@ -40,9 +41,6 @@
 
 // indexed by PAPRState
 const char* STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
-
-// TODO make this automatically update during build process
-const char* PRODUCT_ID = "PAPR Rev 3.1 7/7/2021";
 
 /********************************************************************
  * Fan constants
@@ -52,11 +50,6 @@ const char* PRODUCT_ID = "PAPR Rev 3.1 7/7/2021";
 // more often, while a higher value will give more accurate and smooth readings.
 const unsigned long FAN_SPEED_READING_INTERVAL = 1000UL;
 
-// The duty cycle for each fan speed. Indexed by FanSpeed.
-const byte fanDutyCycles[] = { 0, 50, 100 };
-
-// The expected RPM for each fan speed. Indexed by FanSpeed.
-const unsigned int expectedFanRPM[] = { 7479, 16112, 22271 };
 /* Here are measured values for fan RMP for the San Ace 9GA0412P3K011
    %    MIN     MAX     AVG
 
@@ -111,10 +104,6 @@ const int* alertLEDs[] = { 0, batteryLowLEDs, fanRPMLEDs }; // Indexed by enum A
 const unsigned long batteryAlertMillis[] = { 1000UL, 1000UL };
 const unsigned long fanAlertMillis[] = { 200UL, 200UL };
 const unsigned long* alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
-
-// Buzzer settings.
-const long BUZZER_FREQUENCY = 2500; // in Hz
-const int BUZZER_DUTYCYCLE = 50; // in percent
 
 // A "low battery" alarm is in effect whenever the battery level is at or below the "urgent" amount.
 // If a charger is connected then the red LED flashes until the level is above the urgent amount,
@@ -571,7 +560,7 @@ bool shouldEnterTestMode() {
 }
 
 // This function gets called when the MCU is powered up.
-void Main::setup()
+bool Main::setup()
 {
     // Make sure watchdog is off. Remember what kind of reset just happened. Setup the hardware.
     int resetFlags = hw.watchdogStartup();
@@ -589,10 +578,9 @@ void Main::setup()
 
     flashAllLEDs(50UL, 3);
     if (shouldEnterTestMode()) {
-        serialPrintf("\r\n\n<<< Should enter test Mode >>>");
-    } else {
-        serialPrintf("\r\n\n<<< Normal Mode >>>");
+        return true;
     }
+    serialPrintf("\r\n\n<<< Normal Mode >>>");
     Serial.end();
     serialInit(false);
     flashAllLEDs(50UL, 10);
@@ -634,6 +622,7 @@ void Main::setup()
     battery.initializeCoulombCount();
     enterState(initialState);
     statusReport.start();
+    return false;
 }
 
 // Call the update() function of everybody who wants to do something each time through the loop() function.
