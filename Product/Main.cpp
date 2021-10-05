@@ -570,7 +570,7 @@ bool shouldEnterTestMode() {
     return false;
 }
 
-// This function gets called once, when the MCU starts up.
+// This function gets called when the MCU is powered up.
 void Main::setup()
 {
     // Make sure watchdog is off. Remember what kind of reset just happened. Setup the hardware.
