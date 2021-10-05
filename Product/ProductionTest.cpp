@@ -19,7 +19,8 @@
 // https://cse537-2011.blogspot.com/2011/02/accessing-internal-eeprom-on-atmega328p.html
 
 void serialPrint(const char* const string) {
-	serialPrintf("%s\r\n", string);
+	Serial.print(string);
+	Serial.flush();
 }
 
 //bool shouldEnterTestMode() {
@@ -70,7 +71,7 @@ int getNextCommand() {
 		}
 		if (c != -1) {
 			int result = Serial.read();
-			delay(100);
+			hw.delay(100);
 			while (Serial.peek() != -1) {
 				Serial.read();
 			}
@@ -83,11 +84,11 @@ int getNextCommand() {
 bool doPause(int waitTimeMillis) {
 	while (waitTimeMillis > 0) {
 		if (Serial.peek() != -1) {
-			delay(100);
+			hw.delay(100);
 			while (Serial.peek() != -1) Serial.read();
 			return false;
 		}
-		delay(50);
+		hw.delay(50);
 		waitTimeMillis -= 50;
 	}
 	return true;
@@ -231,7 +232,7 @@ void testVoltageReference() {
 		// to calculate worst case currents in either direction, though we probably
 		// want to specify it more tightly than that to allow for variations over
 		// the life of the unit.
-		long referenceReading = analogRead(REFERENCE_VOLTAGE_PIN);
+		long referenceReading = hw.analogRead(REFERENCE_VOLTAGE_PIN);
 		serialPrintf("%ld milliVolts", (5000L * referenceReading) / 1024L);
 		pause(1000);
 	}
@@ -265,7 +266,7 @@ void testChargerDetect() {
 	Serial.end();
 	//UCSR0B = UCSR0B & ~(1 << RXCIE0); // disable RX Complete Interrupt Enable
 	//UCSR0B = UCSR0B & ~(1 << RXEN0); // disable USART Receiver.
-	pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
+	hw.pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
 
 	setLEDs(LEDpins, numLEDs, LED_OFF);
 	bool toggle = false;
@@ -278,7 +279,7 @@ void testChargerDetect() {
 		setLED(LEDpins[numLEDs - 1], connected ? LED_ON : LED_OFF);
 		toggle = !toggle;
 		setLED(LEDpins[3], toggle ? LED_ON : LED_OFF);
-		delay(50);
+		hw.delay(50);
 		if (connected) {
 			i = 0;
 		}
@@ -359,6 +360,7 @@ void productionTestSetup() {
 	// hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
 	// delay(1000UL);
 	// serialInit(true);
+	hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
 
 	serialPrintf("\r\n\n<<< Test Mode >>>");
 	serialPrintf("Commands are:");
@@ -377,16 +379,15 @@ void productionTestLoop() {
 	int command = getNextCommand();
 	serialPrintf("");
 	serialPrintf("command %c", command);
-	return;
 	switch(command) {
 		case '1': testLEDs(); break;
-		case '2': testFan(); break;
+		//case '2': testFan(); break;
 		case '3': testSpeaker(); break;
 		case '4': testButtons(); break;
-		case '5': testVoltageReference(); break;
-		case '6': testBatteryVoltage(); break;
-		case '7': testChargerDetect(); break;
-		case '8': testCurrentSensor(); break;
+		//case '5': testVoltageReference(); break;
+		//case '6': testBatteryVoltage(); break;
+		//case '7': testChargerDetect(); break;
+		//case '8': testCurrentSensor(); break;
 		default: serialPrintf("Unknown command '%c'", command); break;
 	}
 }
