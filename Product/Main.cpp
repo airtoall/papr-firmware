@@ -535,7 +535,7 @@ Main::Main() :
         []() { instance->onBeepTimer(); }),
     chargeReminder(15000UL, 
         []() { instance->onChargeReminder(); }),
-    statusReport(10000UL, 
+    statusReport(5000UL, 
         []() { instance->onStatusReport(); }),
     fanController(FAN_RPM_PIN, FAN_SPEED_READING_INTERVAL, FAN_PWM_PIN),
     currentFanSpeed(fanLow),

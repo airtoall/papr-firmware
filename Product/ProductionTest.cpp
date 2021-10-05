@@ -372,22 +372,23 @@ void productionTestSetup() {
 	serialPrintf("6 - Battery Voltage test");
 	serialPrintf("7 - Charger Detect test");
 	serialPrintf("8 - Current Sensor test");
+	serialPrintf("r - Restart");
 }
 
 void productionTestLoop() {
 	serialPrintf("\r\nEnter Test Command:");
 	int command = getNextCommand();
 	serialPrintf("");
-	serialPrintf("command %c", command);
 	switch(command) {
 		case '1': testLEDs(); break;
 		//case '2': testFan(); break;
 		case '3': testSpeaker(); break;
 		case '4': testButtons(); break;
-		//case '5': testVoltageReference(); break;
-		//case '6': testBatteryVoltage(); break;
+		case '5': testVoltageReference(); break;
+		case '6': testBatteryVoltage(); break;
 		//case '7': testChargerDetect(); break;
-		//case '8': testCurrentSensor(); break;
+		case '8': testCurrentSensor(); break;
+		case 'r': hw.reset(); break;
 		default: serialPrintf("Unknown command '%c'", command); break;
 	}
 }
