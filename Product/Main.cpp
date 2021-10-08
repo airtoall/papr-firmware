@@ -577,7 +577,7 @@ bool Main::setup()
 
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialBegin(true);
-    serialPrintf("%s Build %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, resetFlags);
+    serialPrintf("%s %s %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, __TIME__, resetFlags);
     if (shouldEnterTestMode()) {
         return true;
     }
