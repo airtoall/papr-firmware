@@ -224,7 +224,6 @@ done:
  * Voltage Reference Test
  ********************************************************************/
 
-
 void testVoltageReference() {
 	serialPrintln(F("Voltage Reference Test"));
 	while (true) {
@@ -271,6 +270,19 @@ void testChargerDetect() {
 	serialPrintln(F("Charger Detect Test"));
 
 	// The serial port input pin is the same pin as the Charger Connected indicator. 
+	// We must not use the serial port while this test is in progress.
+
+	// Give the user a few seconds to disconnect the serial cable.
+	serialPrintln(F("Please disconnect the serial cable."));
+	serialPrintln(F("The test will begin when the orange LED starts flickering."));
+	serialPrintln(F("When you are finished testing, please re-connect the serial cable."));
+	for (int j = 0; j < numLEDs; j += 1) {
+		setLED(LEDpins[j], LED_ON);
+		hw.delay(500L);
+		setLED(LEDpins[j], LED_OFF);
+		hw.delay(500L);
+	}
+
 	// Temporarily disable the serial port and enable the charger connected indication.
 	Serial.end(); 
 	hw.pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
@@ -293,7 +305,15 @@ void testChargerDetect() {
 	}
 	setLEDs(LEDpins, numLEDs, LED_OFF);
 
-	serialInit(true);
+	// Test is finished. Give the user a few seconds to reconnect the serial cable.
+	for (int j = numLEDs - 1; j >= 0; j -= 1) {
+		setLED(LEDpins[j], LED_ON);
+		hw.delay(500L);
+		setLED(LEDpins[j], LED_OFF);
+		hw.delay(500L);
+	}
+
+	serialBegin(true);
 	serialPrintln(F("\r\nCharger Detect Test ended"));
 }
 

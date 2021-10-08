@@ -1,6 +1,5 @@
 #include "Battery.h"
 #include "Hardware.h"
-#include "MySerial.h"
 
 #define hw Hardware::instance
 
@@ -108,7 +107,6 @@ void Battery::updateBatteryTimers()
     if (isChargingNow && !prevIsCharging) {
         // we have just started charging
         chargeStartMilliSecs = hw.millis();
-        //serialPrintf("Start charging at %ld", chargeStartMilliSecs);
     }
     prevIsCharging = isChargingNow;
 

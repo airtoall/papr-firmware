@@ -1,6 +1,5 @@
 #include "Arduino.h"
 #include "FanController.h"
-#include "MySerial.h"
 #include "Hardware.h"
 
 #define hw Hardware::instance

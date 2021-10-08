@@ -129,6 +129,13 @@ void Main::setLED(const int pin, int onOff) {
     }
 }
 
+// TEMP - FOR DEBUGGING
+void flashLED(const int pin, const unsigned int millis) {
+    hw.digitalWrite(pin, LED_ON);
+    if (millis) hw.delay(millis);
+    hw.digitalWrite(pin, LED_OFF);
+}
+
 // Turn off all LEDs
 void Main::allLEDsOff()
 {
@@ -478,11 +485,11 @@ void Main::onPowerOffPress()
 void Main::onFanDownPress()
 {
     /* TEMP for testing/debugging: decrease the current battery level by a few percent. */
-    if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
-        battery.DEBUG_incrementPicoCoulombs(-1500000000000000LL);
-        serialPrintf("Charge is %d%", getBatteryPercentFull());
-        return;
-    }
+    //if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
+    //    battery.DEBUG_incrementPicoCoulombs(-1500000000000000LL);
+    //    serialPrintf("Charge is %d%", getBatteryPercentFull());
+    //    return;
+    //}
 
     setFanSpeed((currentFanSpeed == fanHigh) ? fanMedium : fanLow);
 }
@@ -491,11 +498,11 @@ void Main::onFanDownPress()
 void Main::onFanUpPress()
 {
     /* TEMP for testing/debugging: increase the current battery level by a few percent. */
-    if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
-        battery.DEBUG_incrementPicoCoulombs(1500000000000000LL);
-        serialPrintf("Charge is %d%", getBatteryPercentFull());
-        return;
-    }
+    //if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
+    //    battery.DEBUG_incrementPicoCoulombs(1500000000000000LL);
+    //    serialPrintf("Charge is %d%", getBatteryPercentFull());
+    //    return;
+    //}
 
     setFanSpeed((instance->currentFanSpeed == fanLow) ? fanMedium : fanHigh);
 }
@@ -568,18 +575,15 @@ bool Main::setup()
     stopPB2PWM();
     flashAllLEDs(50UL, 3); // tell the user we are alive
 
-    #ifdef SERIAL_ENABLED
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
-    serialInit(true);
-    serialPrintf("%s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, resetFlags);
+    serialBegin(true);
+    serialPrintf("%s Build %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, resetFlags);
     if (shouldEnterTestMode()) {
         return true;
     }
     // The user doesn't want test mode.
     serialPrintln(F("\r\n\n<<< Normal Mode >>>"));
-    Serial.end();
-    serialInit(false); // RE-initialize the serial port with input disabled. This frees up the input pin to be used as the Charger Connected signal.
-    #endif
+    serialEnd();
 
     // Decide what state we should be in.
     PAPRState initialState;
@@ -690,7 +694,8 @@ void Main::loop()
 
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
-    #ifdef SERIAL_ENABLED
+    if (!serialActive()) return;
+
     serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charging,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,millis,%lu,micros,%lu",
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
         (buzzerState == BUZZER_ON) ? "on" : "off",
@@ -709,7 +714,6 @@ void Main::onStatusReport() {
         (long)(battery.getPicoCoulombs() / 1000000000000LL),
         getBatteryPercentFull(),
         hw.millis(),hw.micros());
-    #endif
 }
 
 Main* Main::instance;

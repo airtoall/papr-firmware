@@ -1,9 +1,6 @@
 #include "MySerial.h"
-
-#ifdef SERIAL_ENABLED
-//#include "stdarg.h"
-//#include "stdio.h"
-#include "Arduino.h"
+#include "stdarg.h"
+#include "stdio.h"
 #include "Hardware.h"
 
 static char buffer1[30];
@@ -13,8 +10,10 @@ static char buffer4[30];
 static char* buffers[] = { buffer1, buffer2, buffer3, buffer4 };
 static int nextBuffer = 0;
 static const int numBuffers = 4;
+static bool _serialActive = false;
 
 void serialPrintf(const char* __fmt, ...) {
+	if (!_serialActive) return;
 	va_list args;
 	char buffer[300];
 	va_start(args, __fmt);
@@ -26,16 +25,18 @@ void serialPrintf(const char* __fmt, ...) {
 }
 
 void serialPrint(const __FlashStringHelper* string) {
+	if (!_serialActive) return;
 	Serial.print(string);
 	Serial.flush();
 }
 
 void serialPrintln(const __FlashStringHelper* string) {
+	if (!_serialActive) return;
 	Serial.println(string);
 	Serial.flush();
 }
 
-void serialInit(bool inputAllowed) {
+void serialBegin(bool inputAllowed) {
 	Serial.begin(57600);
 
 	if (!inputAllowed) {
@@ -45,10 +46,22 @@ void serialInit(bool inputAllowed) {
 		UCSR0B = UCSR0B & ~(1 << RXEN0); // disable USART Receiver.
 		pinMode(CHARGER_CONNECTED_PIN, INPUT_PULLUP);
 	}
+
+	_serialActive = true;
 }
 
+void serialEnd() {
+	_serialActive = false;
+	Serial.end();
+}
+
+bool serialActive() {
+	return _serialActive;
+}
 char* renderLongLong(long long num) {
 	// doesn't work for LLONG_MAX + 1, a.k.a. -LLONG_MAX - 1
+
+	if (_serialActive) return "";
 
 	if (num == 0) {
 		static char* zero = "0";
@@ -111,4 +124,3 @@ char* renderLongLong(long long num) {
     long long d = a;
     serialPrintf("4: %s %s %s %s", renderLongLong(a), renderLongLong(b), renderLongLong(c), renderLongLong(d));
 */
-#endif
