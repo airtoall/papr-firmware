@@ -52,7 +52,7 @@ const char* STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
 // more often, while a higher value will give more accurate and smooth readings.
 const unsigned long FAN_SPEED_READING_INTERVAL = 1000UL;
 
-/* Here are measured values for fan RMP for the San Ace 9GA0412P3K011
+/* Here are measured values for fan RPM for the San Ace 9GA0412P3K011
    %    MIN     MAX     AVG
 
    0,    7461,   7480,    7479
@@ -460,7 +460,7 @@ void Main::onPowerOnPress()
     }
 }
 
-// This function gets called when the user presses the Power On button
+// This function gets called when the user presses the Power Off button
 void Main::onPowerOffPress()
 {
     switch (paprState) {
@@ -597,19 +597,16 @@ bool Main::setup()
     if (resetFlags & (1 << WDRF)) {
         // Watchdog timer expired. Tell the user that something unusual happened.
         flashAllLEDs(100UL, 10);
-        initialState = stateOn;
+        initialState = battery.isCharging() ? stateOnCharging : stateOn;
     } else if (resetFlags == 0) {
         // Manual reset. Tell the user that something unusual happened.
         flashAllLEDs(300UL, 5);
-        initialState = stateOn;
+        initialState = battery.isCharging() ? stateOnCharging : stateOn;
     } else {
         // It's a simple power-on. This will happen when:
         // - somebody in the factory just connected the battery to the PCB; or
         // - the battery had been fully drained (and therefore not delivering any power), and the user just plugged in the charger.
-        initialState = stateOff;
-    }
-    if (battery.isCharging()) {
-        initialState = (PAPRState)((int)initialState + 2);
+        initialState = battery.isCharging() ? stateOffCharging : stateOff;
     }
 
     // Initialize the fan
