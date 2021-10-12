@@ -118,7 +118,7 @@ const int URGENT_BATTERY_PERCENT = 8;
  * LED
  ********************************************************************/
 
-// Set a single LED to o given state
+// Set a single LED to a given state
 void Main::setLED(const int pin, int onOff) {
     hw.digitalWrite(pin, onOff);
 
