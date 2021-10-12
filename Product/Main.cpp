@@ -35,6 +35,8 @@
 #include "Hardware.h"
 #include "MiscConstants.h"
 
+#define SERIAL_DEBUG // define this symbol to enable debug output to the serial port
+
  // The Hardware object gives access to all the microcontroller hardware such as pins and timers. Please always use this object,
  // and never access any hardware or Arduino APIs directly. This gives us the option of using a fake hardware object for unit testing.
 #define hw Hardware::instance
@@ -584,6 +586,11 @@ bool Main::setup()
     // The user doesn't want test mode.
     serialPrintln(F("\r\n\n<<< Normal Mode >>>"));
     serialEnd();
+    
+    #ifdef SERIAL_DEBUG
+    serialBegin(false);
+    serialPrintln(F("\r\n\n<<< DEBUG ON >>>"));
+    #endif
 
     // Decide what state we should be in.
     PAPRState initialState;
