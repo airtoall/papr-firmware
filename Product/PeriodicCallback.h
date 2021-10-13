@@ -7,10 +7,11 @@ extern unsigned long getMillis();
 
 class PeriodicCallback {
 public:
-    PeriodicCallback(unsigned long intervalMillis, void (*callback)()) : _intervalMillis(intervalMillis), _callback(callback), _active(false) {}
+    PeriodicCallback(void (*callback)()) : _callback(callback), _active(false) {}
 
-    void start() {
+    void start(unsigned long intervalMillis) {
         _active = true;
+        _intervalMillis = intervalMillis;
         _intervalStartMillis = getMillis();
     }
 

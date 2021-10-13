@@ -53,7 +53,7 @@ void Battery::wakeUp() {
     microVolts = 20000000LL;
     chargeStartMilliSecs = hw.millis();
     lastVoltageChangeMilliSecs = hw.millis();
-    prevIsCharging = false;
+    prevIsChargerConnected = false;
     prevMicroVolts = 0;
     maybeChargingFinished = false;
 }
@@ -93,9 +93,24 @@ Battery::Battery()
 // The Charger Connected pin indicates whether the charger is connected. It DOES NOT tell you if the 
 // battery is charging - for that you have to look at the current sensor to see if charge is flowing
 // into or out of the battery.
-bool Battery::isCharging()
+bool Battery::isChargerConnected()
 {
     return hw.digitalRead(CHARGER_CONNECTED_PIN) == CHARGER_CONNECTED;
+}
+
+ChargerStatus Battery::getChargerStatus() {
+    // Maybe the charger is not connected.
+    if (!isChargerConnected()) return chargerNotConnected;
+
+    // Maybe a charging current is flowing.
+    if (hw.readMicroAmps() > CHARGE_MICRO_AMPS_WHEN_FULL) return chargerCharging;
+
+    // Maybe the battery is full.
+    if (picoCoulombs >= BATTERY_CAPACITY_PICO_COULOMBS) return chargerFull;
+
+    // The charger is connected, but charging current is not flowing even though the battery is not full.
+    // There must be some kind of error.
+    return chargerError;
 }
 
 // The coloumb counting algorithm (in Battery::update()) needs to know how long ago the voltage changed,
@@ -103,12 +118,12 @@ bool Battery::isCharging()
 // the variables "chargeStartMilliSecs" and "lastVoltageChangeMilliSecs".
 void Battery::updateBatteryTimers()
 {
-    bool isChargingNow = isCharging();
-    if (isChargingNow && !prevIsCharging) {
-        // we have just started charging
+    bool isChargerConnectedNow = isChargerConnected();
+    if (isChargerConnectedNow && !prevIsChargerConnected) {
+        // the charger was just connected
         chargeStartMilliSecs = hw.millis();
     }
-    prevIsCharging = isChargingNow;
+    prevIsChargerConnected = isChargerConnectedNow;
 
     // Update "microVolts" which is just a smoothed version of hw.readMicroVolts(). 
     // We do a low pass filter to smooth out random variations in the readings.
@@ -161,12 +176,13 @@ void Battery::update()
     // 4. the current flow rate is quite low
     unsigned long nowMillis = hw.millis();
     if ((picoCoulombs != BATTERY_CAPACITY_PICO_COULOMBS) &&
-        isCharging() &&                                                              // ...the charger is attached, AND
+        isChargerConnected() &&                                                              // ...the charger is attached, AND
         ((nowMillis - chargeStartMilliSecs) > CHARGER_WINDDOWN_TIME_MILLIS) &&       // ...we've been charging for a few minutes, AND
         ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WINDDOWN_TIME_MILLIS) && // ...the battery voltage hasn't changed for a few minutes, AND
+        (microVolts >= getFullyChargedMicrovolts()) &&                               // ...the battery voltage is what we expect for a full battery
         (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL))                         // ...the current flow rate is quite low
     {
-        // Our 4-point check has passed. So we are probably finished charging. However,
+        // Our 5-point check has passed. So we are probably finished charging. However,
         // because of random fluctuations in the current measurements, we might not be
         // *completely* finished. Let's see if we stay in the "charge finished" state
         // for a few seconds.
@@ -175,6 +191,7 @@ void Battery::update()
                 // We've been in "charge finished" state for long enough. It's now safe
                 // to assume that the battery is fully charged.
                 picoCoulombs = BATTERY_CAPACITY_PICO_COULOMBS;
+                updateFullyChargedMicrovolts(microVolts);
                 maybeChargingFinished = false;
             }
         } else {
@@ -184,6 +201,15 @@ void Battery::update()
     } else {
         maybeChargingFinished = false;
     }
+}
+
+long long Battery::getFullyChargedMicrovolts() {
+    // if there is a saved value in nv ram, return that. Otherwise return our hard-coded estimte.
+    return BATTERY_FULLY_CHARGED_MICROVOLTS;
+}
+
+void Battery::updateFullyChargedMicrovolts(long long /*microVolts*/) {
+
 }
 
 void Battery::DEBUG_incrementPicoCoulombs(long long increment)

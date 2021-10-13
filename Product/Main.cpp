@@ -42,7 +42,10 @@
 #define hw Hardware::instance
 
 // indexed by PAPRState
-const char* STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
+const char* const STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
+
+// indexed by ChargerStatus
+const char* const CHARGER_STATUS_NAMES[] = { "No", "Charging", "Full", "Error" };
 
 /********************************************************************
  * Fan constants
@@ -100,12 +103,12 @@ const unsigned long POWER_OFF_BUTTON_HOLD_MILLIS = 1000UL;
 // Which LEDs to flash for each type of alert.
 const int batteryLowLEDs[] = { BATTERY_LED_LOW_PIN, CHARGING_LED_PIN , -1 };
 const int fanRPMLEDs[] = { FAN_LOW_LED_PIN, FAN_MED_LED_PIN, FAN_HIGH_LED_PIN, -1 };
-const int* alertLEDs[] = { 0, batteryLowLEDs, fanRPMLEDs }; // Indexed by enum Alert.
+const int* const alertLEDs[] = { 0, batteryLowLEDs, fanRPMLEDs }; // Indexed by enum Alert.
 
 // What are the on & off durations for the pulsed lights and buzzer for each type of alert. 
 const unsigned long batteryAlertMillis[] = { 1000UL, 1000UL };
 const unsigned long fanAlertMillis[] = { 200UL, 200UL };
-const unsigned long* alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
+const unsigned long* const alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
 
 // A "low battery" alarm is in effect whenever the battery level is at or below the "urgent" amount.
 // If a charger is connected then the red LED flashes until the level is above the urgent amount,
@@ -205,6 +208,9 @@ void Main::cancelAlert()
 {
     currentAlert = alertNone;
     alertTimer.cancel();
+    setBuzzer(false);
+    allLEDsOff();
+    chargerLEDStatus = chargerNotConnected;
 }
 
 // Turn the buzzer on or off.
@@ -271,33 +277,63 @@ int Main::getBatteryPercentFull() {
     return (int)((battery.getPicoCoulombs() - BATTERY_MIN_CHARGE_PICO_COULOMBS) / ((BATTERY_CAPACITY_PICO_COULOMBS - BATTERY_MIN_CHARGE_PICO_COULOMBS) / 100LL));
 }
 
+void Main::updateChargerLED() {
+    ChargerStatus status = battery.getChargerStatus();
+    if (status == chargerLEDStatus) return;
+
+    chargerLEDFlasher.stop();
+
+    serialPrintf("charger status %d", (int)status);
+
+    switch (status) {
+    case chargerNotConnected:
+        setLED(CHARGING_LED_PIN, LED_OFF);
+        break;
+    case chargerCharging:
+        chargerLEDToggle = false;
+        onChargerLED();
+        chargerLEDFlasher.start(2000L);
+        break;
+    case chargerFull:
+        setLED(CHARGING_LED_PIN, LED_ON);
+        break;
+    case chargerError:
+        chargerLEDToggle = false;
+        onChargerLED();
+        chargerLEDFlasher.start(100L);
+        break;
+    }
+
+    chargerLEDStatus = status;
+}
+
 // Call this periodically to update the battery and charging LEDs.
 void Main::updateBatteryLEDs() {
     int percentFull = getBatteryPercentFull();
 
     // Decide if the red LED should be on or not.
-    bool redLED = (percentFull < 40);
-    if (percentFull <= URGENT_BATTERY_PERCENT) {
-        // The battery level is really low. Flash the LED.
-        bool ledToggle = (hw.millis() / 1000UL) & 1;
-        redLED = redLED && ledToggle;
-    }
+    //bool redLED = (percentFull < 40);
+    //if (percentFull <= URGENT_BATTERY_PERCENT && !battery.isChargerConnected()) {
+    //    // The battery level is really low. Flash the LED.
+    //    bool ledToggle = (hw.millis() / 1000UL) & 1;
+    //    redLED = redLED && ledToggle;
+    //}
 
     // Turn on/off the battery LEDs as required
-    setLED(BATTERY_LED_LOW_PIN, redLED ? LED_ON : LED_OFF); // red
+    setLED(BATTERY_LED_LOW_PIN, (percentFull < 40) ? LED_ON : LED_OFF); // red
     setLED(BATTERY_LED_MED_PIN, ((percentFull > 15) && (percentFull < 97)) ? LED_ON : LED_OFF); // yellow
     setLED(BATTERY_LED_HIGH_PIN, (percentFull > 70) ? LED_ON : LED_OFF); // green
 
     // Turn on/off the charging indicator LED as required
-    setLED(CHARGING_LED_PIN, battery.isCharging() ? LED_ON : LED_OFF); // orange
+    updateChargerLED();
     
     // Maybe turn the charge reminder on or off.
     // The "charge reminder" is the periodic beep that occurs when the battery is below 15%
     // to remind the user to recharge the unit as soon as possible.
-    if (!battery.isCharging() && percentFull <= 15 && currentAlert != alertBatteryLow) {
+    if (!battery.isChargerConnected() && percentFull <= 15 && currentAlert != alertBatteryLow) {
         if (!chargeReminder.isActive()) {
             onChargeReminder();
-            chargeReminder.start();
+            chargeReminder.start(15000UL);
         }
     } else {
         chargeReminder.stop();
@@ -308,26 +344,33 @@ void Main::updateBatteryLEDs() {
 void Main::checkForBatteryAlert()
 {
     if (currentAlert == alertBatteryLow) {
-        if (battery.isCharging() || getBatteryPercentFull() > URGENT_BATTERY_PERCENT) {
+        if (battery.isChargerConnected() || getBatteryPercentFull() > URGENT_BATTERY_PERCENT) {
             cancelAlert();
         }
-    } else if (getBatteryPercentFull() <= URGENT_BATTERY_PERCENT && !battery.isCharging()) {
+    } else if (getBatteryPercentFull() <= URGENT_BATTERY_PERCENT && !battery.isChargerConnected()) {
         chargeReminder.stop();
+        chargerLEDFlasher.stop();
         raiseAlert(alertBatteryLow);
     }
 }
 
-// This is the callback function for chargeReminder. When it's active, this function gets called every minute or so.
-// We turn on the buzzer and the charging LED, then set a timer for when to turn buzzer and LED off.
-void Main::onChargeReminder() {
-    //serialPrintf("reminder beep");
-    setBuzzer(BUZZER_ON);
-    setLED(CHARGING_LED_PIN, LED_ON);
-    beepTimer.start(500UL);
+// This is the callback function for charger indicator LED.
+void Main::onChargerLED() {
+    chargerLEDToggle = !chargerLEDToggle;
+    setLED(CHARGING_LED_PIN, chargerLEDToggle ? LED_ON : LED_OFF);
+
 }
 
-// This is the callback function for beepTimer. This function gets called to turn off the chargeReminder buzzer and LED. 
-void Main::onBeepTimer() {
+// This is the callback function for the charger reminder. When it's active, this function gets called every minute or so.
+// We turn on the buzzer and the charging LED, then set a timer for when to turn buzzer and LED off.
+void Main::onChargeReminder() {
+    setBuzzer(BUZZER_ON);
+    setLED(CHARGING_LED_PIN, LED_ON);
+    chargeReminderTimer.start(500UL);
+}
+
+// This is the callback function for chargeReminderTimer. This function gets called to turn off the chargeReminder buzzer and LED. 
+void Main::onChargeReminderTimer() {
     setBuzzer(BUZZER_OFF);
     setLED(CHARGING_LED_PIN, LED_OFF);
 }
@@ -364,6 +407,7 @@ void Main::enterState(PAPRState newState)
             currentFanSpeed = DEFAULT_FAN_SPEED;
             cancelAlert();
             allLEDsOff();
+            chargerLEDStatus = chargerNotConnected;
             break;
     }
     onStatusReport();
@@ -387,7 +431,7 @@ void Main::nap()
     while (true) {
         LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
 
-        if (battery.isCharging()) {
+        if (battery.isChargerConnected()) {
             hw.setPowerMode(fullPowerMode);
             enterState(stateOffCharging);
             hw.wdt_enable(WDTO_8S);
@@ -487,11 +531,11 @@ void Main::onPowerOffPress()
 void Main::onFanDownPress()
 {
     /* TEMP for testing/debugging: decrease the current battery level by a few percent. */
-    //if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
-    //    battery.DEBUG_incrementPicoCoulombs(-1500000000000000LL);
-    //    serialPrintf("Charge is %d%", getBatteryPercentFull());
-    //    return;
-    //}
+    if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
+        battery.DEBUG_incrementPicoCoulombs(-1500000000000000LL);
+        serialPrintf("Charge is %d%", getBatteryPercentFull());
+        return;
+    }
 
     setFanSpeed((currentFanSpeed == fanHigh) ? fanMedium : fanLow);
 }
@@ -500,11 +544,11 @@ void Main::onFanDownPress()
 void Main::onFanUpPress()
 {
     /* TEMP for testing/debugging: increase the current battery level by a few percent. */
-    //if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
-    //    battery.DEBUG_incrementPicoCoulombs(1500000000000000LL);
-    //    serialPrintf("Charge is %d%", getBatteryPercentFull());
-    //    return;
-    //}
+    if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
+        battery.DEBUG_incrementPicoCoulombs(1500000000000000LL);
+        serialPrintf("Charge is %d%", getBatteryPercentFull());
+        return;
+    }
 
     setFanSpeed((instance->currentFanSpeed == fanLow) ? fanMedium : fanHigh);
 }
@@ -540,16 +584,19 @@ Main::Main() :
         []() { instance->onPowerOnPress(); }),
     alertTimer(
         []() { instance->onToggleAlert(); }),
-    beepTimer(
-        []() { instance->onBeepTimer(); }),
-    chargeReminder(15000UL, 
+    chargeReminderTimer(
+        []() { instance->onChargeReminderTimer(); }),
+    chargeReminder(
         []() { instance->onChargeReminder(); }),
-    statusReport(5000UL, 
+    statusReport(
         []() { instance->onStatusReport(); }),
+    chargerLEDFlasher(
+        []() { instance->onChargerLED(); }),
     fanController(FAN_RPM_PIN, FAN_SPEED_READING_INTERVAL, FAN_PWM_PIN),
     currentFanSpeed(fanLow),
     fanSpeedRecentlyChanged(false),
     buzzerState(BUZZER_OFF),
+    chargerLEDStatus(chargerNotConnected),
     currentAlert(alertNone)
 {
     instance = this;
@@ -597,16 +644,16 @@ bool Main::setup()
     if (resetFlags & (1 << WDRF)) {
         // Watchdog timer expired. Tell the user that something unusual happened.
         flashAllLEDs(100UL, 10);
-        initialState = battery.isCharging() ? stateOnCharging : stateOn;
+        initialState = battery.isChargerConnected() ? stateOnCharging : stateOn;
     } else if (resetFlags == 0) {
         // Manual reset. Tell the user that something unusual happened.
         flashAllLEDs(300UL, 5);
-        initialState = battery.isCharging() ? stateOnCharging : stateOn;
+        initialState = battery.isChargerConnected() ? stateOnCharging : stateOn;
     } else {
         // It's a simple power-on. This will happen when:
         // - somebody in the factory just connected the battery to the PCB; or
         // - the battery had been fully drained (and therefore not delivering any power), and the user just plugged in the charger.
-        initialState = battery.isCharging() ? stateOffCharging : stateOff;
+        initialState = battery.isChargerConnected() ? stateOffCharging : stateOff;
     }
 
     // Initialize the fan
@@ -625,7 +672,7 @@ bool Main::setup()
     // and we're done!
     battery.initializeCoulombCount();
     enterState(initialState);
-    statusReport.start();
+    statusReport.start(5000UL);
     return false;
 }
 
@@ -648,7 +695,8 @@ void Main::doAllUpdates()
     buttonPowerOff.update();
     alertTimer.update();
     chargeReminder.update();
-    beepTimer.update();
+    chargeReminderTimer.update();
+    chargerLEDFlasher.update();
     statusReport.update();
 }
 
@@ -660,14 +708,14 @@ void Main::loop()
     switch (paprState) {
         case stateOn:
             doAllUpdates();
-            if (battery.isCharging()) {
+            if (battery.isChargerConnected()) {
                 enterState(stateOnCharging); 
             }
             break;
 
         case stateOnCharging:
             doAllUpdates();
-            if (!battery.isCharging()) {
+            if (!battery.isChargerConnected()) {
                 enterState(stateOn);
             }
             break;
@@ -687,11 +735,12 @@ void Main::loop()
             // - see if the Power On button was pressed
             battery.update();
             updateBatteryLEDs();
-            if (!battery.isCharging()) {
+            if (!battery.isChargerConnected()) {
                 enterState(stateOff);
             }
             buttonPowerOn.update();
             statusReport.update();
+            chargerLEDFlasher.update();
             break;
     }
 }
@@ -700,12 +749,12 @@ void Main::loop()
 void Main::onStatusReport() {
     if (!serialActive()) return;
 
-    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charging,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,millis,%lu,micros,%lu",
+    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,millis,%lu,micros,%lu",
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
         (buzzerState == BUZZER_ON) ? "on" : "off",
         currentAlertName(),
         chargeReminder.isActive() ? "yes" : "no",
-        battery.isCharging() ? "yes" : "no",
+        CHARGER_STATUS_NAMES[battery.getChargerStatus()],
         (ledState[0] == LED_ON) ? "red" : "---",
         (ledState[1] == LED_ON) ? "yellow" : "---",
         (ledState[2] == LED_ON) ? "green" : "---",

@@ -119,6 +119,11 @@ const long long NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;              // 0 to 1
 const long long BATTERY_CAPACITY_PICO_COULOMBS = 22680000000000000LL;  // 25,200 coulombs (rated battery capacity) * 0.9 (fudge factor for when battery gets old)
 const long long BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL; // 2,100 coulombs the minimum charge level (the BMS shuts down the battery at this level)
 
+// When the battery is fully charged it will be at nominally 4.2V / cell or 25.2 volts for our 6 cells.
+// The tolerance range is 4.15 to 4.25 volts per cell, so minimum 24.9 volts.
+// The ADC isn't all that accurate, maybe +/-5% worst case, so we consider any voltage over 0.95 x 24.9 to be fully charged.
+const long long BATTERY_FULLY_CHARGED_MICROVOLTS = 23655000L;
+
 /*
 Here is a note from Brent Bolton about how AMPS_PER_CHARGE_FLOW_UNIT and VOLTS_PER_VOLTAGE_UNIT are determined:
 

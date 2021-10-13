@@ -6,13 +6,27 @@
  * 2 key pieces of information: (1) how full is the battery? (2) is the charger attached? 
  */
 
+ // The charger can be in various states.
+enum ChargerStatus {
+    chargerNotConnected,    // the charger is not connected
+    chargerCharging,        // the charger is connected, and the battery is charging
+    chargerFull,            // the charger is connected, and the battery is not charging because it's full
+    chargerError            // the charger is connected, and the battery is not charging because of an error
+                            // (the error might be that the charger is not connected to power, or maybe there is an equipment malfunction).
+};
+
 class Battery {
 public:
     // The constructor. You only need one instance of this class.        
     Battery();
 
     // Is the charger currently connected?
-    bool isCharging();
+    // CAUTION: this only means that the charger is connnected to our PCB. It does NOT
+    // mean that the charger is plugged into the wall and receiving power.
+    bool isChargerConnected();
+
+    // What is the status of the charger right now?
+    ChargerStatus getChargerStatus();
 
     // How much charge is currently in the battery? 
     //
@@ -49,12 +63,18 @@ private:
     // at which time we know how much charge it has.
     static long long estimatePicoCoulombsFromVoltage(long long microVolts);
 
+    // Return the voltage that the battery will have when it is fully charged.
+    static long long getFullyChargedMicrovolts();
+
+    // Update the saved value of the battery's fully-charged voltage.
+    static void updateFullyChargedMicrovolts(long long microVolts);
+
     long long picoCoulombs; // How much charge is in the battery right now.
     long long microVolts;   // The voltage right now.
     unsigned long lastCoulombsUpdateMicroSecs;// microsecond timestamp of when we last sampled the current flow
     unsigned long chargeStartMilliSecs;       // millisecond timestamp of when the battery charger started up
     unsigned long lastVoltageChangeMilliSecs; // millisecond timestamp of when the battery voltage last changed
-    bool prevIsCharging;      // what was "isCharging" the last time we checked
+    bool prevIsChargerConnected;      // what was "isChargerConnected" the last time we checked
     long long prevMicroVolts; // what was "microVolts" the last time we checked
     bool maybeChargingFinished;  // If true, then we suspect that the battery is now fully charged
     unsigned long maybeChargingFinishedMilliSecs;  // millisecond timestamp of when we first suspected charge done

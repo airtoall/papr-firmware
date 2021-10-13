@@ -61,7 +61,8 @@ private:
     void onToggleAlert();
     void onChargeReminder();
     void onStatusReport();
-    void onBeepTimer();
+    void onChargeReminderTimer();
+    void onChargerLED();
     void raiseAlert(Alert alert);
     void setFanSpeed(FanSpeed speed);
     void checkForFanAlert();
@@ -79,6 +80,7 @@ private:
     bool doPowerOffWarning();
     int getBatteryPercentFull();
     void setBuzzer(int onOff);
+    void updateChargerLED();
     const char* currentAlertName() { return (currentAlert == alertNone) ? "no" : ((currentAlert == alertBatteryLow) ? "batt" : "fan"); }
     
     /********************************************************************
@@ -107,7 +109,7 @@ private:
 
     // The timer that does the reminder beeps when the battery gets below 15%.
     PeriodicCallback chargeReminder;
-    OneTimeCallback beepTimer;
+    OneTimeCallback chargeReminderTimer;
 
     /********************************************************************
      * Etc.
@@ -118,6 +120,11 @@ private:
 
     // This object keeps track of the battery state-of-charge.
     Battery battery;
+
+    // Data for the charger status indicator LED.
+    ChargerStatus chargerLEDStatus;
+    bool chargerLEDToggle;
+    PeriodicCallback chargerLEDFlasher;
 
     // Data for the periodic status reports that we send to the serial port. 
     // For testing and debugging use.
