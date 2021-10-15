@@ -31,7 +31,7 @@ unsigned int FanController::getRPM() {
 	if (elapsed > _sensorThreshold)
 	{
 		noInterrupts();
-		float correctionFactor = 1000.0 / elapsed;
+		float correctionFactor = 1000.0 / elapsed; // float is quite slow on our little MCU, but it's OK because we don't do it very much.
 		_lastReading = correctionFactor * _halfRevs / 2 * 60;
 		_halfRevs = 0;
 		_lastMillis = hw.millis();

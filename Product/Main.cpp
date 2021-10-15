@@ -29,7 +29,6 @@
  * If you don't do this, the compiler will sometimes generate code that doesn't work the way you expect! Beware!
  */
 #include "Main.h"
-#include "PB2PWM.h"
 #include <LowPower.h>
 #include "MySerial.h"
 #include "Hardware.h"
@@ -72,6 +71,7 @@ const unsigned long FAN_SPEED_READING_INTERVAL = 1000UL;
 */
 
 // How much tolerance do we give when checking for correct fan RPM. We allow +/- 15%.
+// We use float here, which is quite slow on our little MCU, but it's OK because we don't do it very much.
 const float LOWEST_FAN_OK_RPM = 0.85;
 const float HIGHEST_FAN_OK_RPM = 1.15;
 
@@ -216,11 +216,7 @@ void Main::cancelAlert()
 // Turn the buzzer on or off.
 void Main::setBuzzer(int onOff) {
     //serialPrintf("set buzzer %s", onOff == BUZZER_OFF ? "off" : "on");
-    if (onOff) {
-        startPB2PWM(BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
-    } else {
-        stopPB2PWM();
-    }
+    hw.setBuzzer(onOff, BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
     buzzerState = onOff;
 }
 
@@ -621,12 +617,19 @@ bool Main::setup()
     // Make sure watchdog is off. Remember what kind of reset just happened. Setup the hardware.
     int resetFlags = hw.watchdogStartup();
     hw.setup();
-    stopPB2PWM();
+    hw.setBuzzer(false, 0, 0);
     flashAllLEDs(50UL, 3); // tell the user we are alive
 
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialBegin(true);
     serialPrintf("%s %s %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, __TIME__, resetFlags);
+    serialPrintf("RATED_BATTERY_CAPACITY_PICO_COULOMBS %s", renderLongLong(RATED_BATTERY_CAPACITY_PICO_COULOMBS));
+    serialPrintf("BATTERY_CAPACITY_PICO_COULOMBS %s", renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS));
+    serialPrintf("BATTERY_CAPACITY_PICO_COULOMBS_ALMOST %s", renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS_ALMOST));
+    serialPrintf("MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS %s", renderLongLong(MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS));
+    serialPrintf("BATTERY_FULLY_CHARGED_MICROVOLTS %s", renderLongLong(BATTERY_FULLY_CHARGED_MICROVOLTS));
+    serialPrintf("CHARGE_MICRO_AMPS_WHEN_FULL %s", renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL));
+    serialPrintf("CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE %s", renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE));
     if (shouldEnterTestMode()) {
         return true;
     }
