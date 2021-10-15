@@ -57,7 +57,7 @@ private:
     void allLEDsOn();
     void setLED(const int pin, int onOff);
     void setLEDs(const int* pinList, int onOff);
-    void flashAllLEDs(unsigned long millis, int count);
+    void flashAllLEDs(uint32_t millis, int count);
     void onToggleAlert();
     void onChargeReminder();
     void onStatusReport();
@@ -91,7 +91,7 @@ private:
     FanSpeed currentFanSpeed;
 
     // After we change the fan speed, we stop checking the RPMs for a few seconds, to let the speed stabilize.
-    unsigned long lastFanSpeedChangeMilliSeconds;
+    uint32_t lastFanSpeedChangeMilliSeconds;
     bool fanSpeedRecentlyChanged;
 
     /********************************************************************
@@ -101,7 +101,7 @@ private:
      // Data used when an alert is active.
     Alert currentAlert;
     const int* currentAlertLEDs = nullptr;
-    const unsigned long* currentAlertMillis = nullptr;
+    const uint32_t* currentAlertMillis = nullptr;
     bool alertToggle;
 
     // The timer that pulses the lights and buzzer during an alert.

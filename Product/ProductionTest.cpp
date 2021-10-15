@@ -25,7 +25,7 @@
 * use F(), then we actually run out of RAM (with no warning!) and the firmware
 * starts behaving erratically.
 */
-
+#include "ProductionTest.h"
 #include "PB2PWM.h"
 #include "MySerial.h"
 #include "Hardware.h"
@@ -38,12 +38,12 @@
 
 #define hw Hardware::instance
 
-long getMilliAmps() {
+int32_t getMilliAmps() {
 	// Do several consecutive readings, so that the low-pass filter in
 	// readMicroAmps() will smooth out any jitter in the readings.
 	for (int j = 0; j < 20; j += 1) hw.readMicroAmps();
 
-	return (long)(hw.readMicroAmps() / -1000LL);
+	return (int32_t)(hw.readMicroAmps() / -1000LL);
 }
 
 /********************************************************************
@@ -157,7 +157,7 @@ void testFan() {
 			serialPrintf("%s speed, duty cycle %d", FAN_SPEED_NAMES[speed], fanDutyCycles[speed]);
 			for (int i = 0; i < 5; i += 1) {
 				pause(1000);
-				unsigned int rpm = fanController.getRPM();
+				uint16_t rpm = fanController.getRPM();
 				serialPrintf("   RPM %u, %ld milliAmps", rpm, getMilliAmps());
 			}
 		}
@@ -238,7 +238,7 @@ void testVoltageReference() {
 		// to calculate worst case currents in either direction, though we probably
 		// want to specify it more tightly than that to allow for variations over
 		// the life of the unit.
-		long referenceReading = hw.analogRead(REFERENCE_VOLTAGE_PIN);
+		int32_t referenceReading = hw.analogRead(REFERENCE_VOLTAGE_PIN);
 		serialPrintf("%ld milliVolts", (5000L * referenceReading) / 1024L);
 		pause(1000);
 	}
@@ -254,7 +254,7 @@ done:
 void testBatteryVoltage() {
 	serialPrintln(F("Battery Voltage Test"));
 	while (true) {
-		serialPrintf("%ld milliVolts", (long)(hw.readMicroVolts() / 1000LL));
+		serialPrintf("%ld milliVolts", (int32_t)(hw.readMicroVolts() / 1000LL));
 		pause(1000);
 	}
 

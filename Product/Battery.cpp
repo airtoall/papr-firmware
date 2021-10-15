@@ -43,9 +43,9 @@
  */
 
 // Some parameters used by the coulomb counting algorithm.
-const unsigned long BATTERY_VOLTAGE_UPDATE_INTERVAL_MILLISECS = 500UL;
-const unsigned long CHARGER_WIND_DOWN_TIME_MILLIS = 1UL * 60UL * 1000UL;               // 1 minute in milliseconds
-const long long BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD = 100000LL;                      // 0.1 volts
+const uint32_t BATTERY_VOLTAGE_UPDATE_INTERVAL_MILLISECS = 500UL;
+const uint32_t CHARGER_WIND_DOWN_TIME_MILLIS = 1UL * 60UL * 1000UL;   // 1 minute in milliseconds
+const int64_t BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD = 100000LL;       // 0.1 volts
 
 // Whenever we wake up from sleeping, we have to re-inititialize all the data used for coulomb counting.
 // We don't coulomb count when the system is sleeping, because the amount of current flow is 
@@ -68,9 +68,9 @@ void Battery::wakeUp() {
 //
 // Caveat: the relationship between voltage and state-of-charge in Li-ion batteries
 // is very unreliable. The best way to determine the true state-of-charge is to fully charge the battery.
-long long Battery::estimatePicoCoulombsFromVoltage(long long microVolts) {   
-    const long milliVolts = ((long)microVolts) / 1000L;
-    long coulombs;
+int64_t Battery::estimatePicoCoulombsFromVoltage(int64_t microVolts) {   
+    const int32_t milliVolts = ((int32_t)microVolts) / 1000L;
+    int32_t coulombs;
 
     if (milliVolts >= 20000L) {
         coulombs = 3000L + ((milliVolts - 20000L) * 4);
@@ -78,7 +78,7 @@ long long Battery::estimatePicoCoulombsFromVoltage(long long microVolts) {
         coulombs = (milliVolts - 16500L);
     }
 
-    return ((long long)coulombs) * 1000000000000LL;
+    return ((int64_t)coulombs) * 1000000000000LL;
 }
 
 // Function to initialize the coulomb counter. We can't do this in the Battery constructor,
@@ -137,7 +137,7 @@ void Battery::updateBatteryTimers()
     // We do a low pass filter to smooth out random variations in the readings.
     // This is probably not necessary because the readings are very stable, 
     // and because we already have a margin of slop.
-    const long long lowPassFilterN = 100LL;
+    const int64_t lowPassFilterN = 100LL;
     microVolts = ((microVolts * lowPassFilterN) + hw.readMicroVolts()) / (lowPassFilterN + 1LL);
 
     if (abs(microVolts - prevMicroVolts) >= BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD) {
@@ -159,8 +159,8 @@ void Battery::update()
     updateBatteryTimers();
 
     // TaKe a sample of the current. Read the clock and the current as close as possible to the same moment.
-    unsigned long nowMicroSecs = hw.micros();
-    long long chargeFlowMicroAmps = hw.readMicroAmps();
+    uint32_t nowMicroSecs = hw.micros();
+    int64_t chargeFlowMicroAmps = hw.readMicroAmps();
     // Note: there is a lot of random variation in charge flow readings (maybe 5-10%).
     // This is not a problem because the data will get smoothed as we accumulate picoCoulombs
     // in many small increments.
@@ -168,9 +168,9 @@ void Battery::update()
     // Calculate the time interval between this sample and the previous, then use that to calculate how much charge
     // has flowed into/outof the battery since the last sample. We will assume that the current remained constant
     // between the current and previous samples.
-    unsigned long deltaMicroSecs = nowMicroSecs - lastCoulombsUpdateMicroSecs;
+    uint32_t deltaMicroSecs = nowMicroSecs - lastCoulombsUpdateMicroSecs;
     lastCoulombsUpdateMicroSecs = nowMicroSecs;
-    long long deltaPicoCoulombs = chargeFlowMicroAmps * deltaMicroSecs;
+    int64_t deltaPicoCoulombs = chargeFlowMicroAmps * deltaMicroSecs;
 
     // update our counter of the battery charge. Don't let the number get out of range.
     // We don't allow the counter to reach the full capacity here. It can only reach
@@ -187,7 +187,7 @@ void Battery::update()
     // 2. we've been charging for at least a few minutes. AND
     // 3. the battery voltage hasn't changed for at least a few minutes
     // 4. the current flow rate is quite low
-    unsigned long nowMillis = hw.millis();
+    uint32_t nowMillis = hw.millis();
     if ((picoCoulombs != BATTERY_CAPACITY_PICO_COULOMBS) &&
         isChargerConnected() &&                                                              // ...the charger is attached, AND
         ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS) &&       // ...we've been charging for a few minutes, AND
@@ -217,16 +217,16 @@ void Battery::update()
     }
 }
 
-long long Battery::getFullyChargedMicrovolts() {
+int64_t Battery::getFullyChargedMicrovolts() {
     // if there is a saved value in nv ram, return that. Otherwise return our hard-coded estimte.
     return BATTERY_FULLY_CHARGED_MICROVOLTS;
 }
 
-void Battery::updateFullyChargedMicrovolts(long long /*microVolts*/) {
+void Battery::updateFullyChargedMicrovolts(int64_t /*microVolts*/) {
 
 }
 
-void Battery::DEBUG_incrementPicoCoulombs(long long increment)
+void Battery::DEBUG_incrementPicoCoulombs(int64_t increment)
 {
     picoCoulombs += increment;
     picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);

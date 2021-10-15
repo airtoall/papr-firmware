@@ -7,21 +7,21 @@
 class FanController : public InterruptCallback
 {
 public:
-	FanController(byte sensorPin, unsigned long sensorThreshold, byte pwmPin = 0);
+	FanController(byte sensorPin, uint32_t sensorThreshold, byte pwmPin = 0);
 	void begin();
 	void end();
-	unsigned int getRPM();
+	uint16_t getRPM();
 	void setDutyCycle(byte dutyCycle);
 	
 private:
 	void _attachInterrupt();
 	void _detachInterrupt();
 	byte _sensorPin;
-	unsigned long _sensorThreshold;
+	uint32_t _sensorThreshold;
 	byte _pwmPin;
-	unsigned int _lastReading;
-	volatile unsigned int _halfRevs;
-	unsigned long _lastMillis;
+	uint16_t _lastReading;
+	volatile uint16_t _halfRevs;
+	uint32_t _lastMillis;
 
 public:
 	virtual void callback();

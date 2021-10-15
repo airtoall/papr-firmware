@@ -16,16 +16,16 @@
  * Time intervals - be aware that millis() and micros() are unsigned 32 bit numbers that
  * count up to 0xFFFFFFFF and then wrap around to 0. To correctly handle this wrap around,
  * always check for interval expiry by doing "if (hw.millis() - startTime > intervalDuration)".
- * All millisecond/microsecond intervals should be of type "unsigned long".
- * All millisecond/microsecond literals should have the UL suffix, e.g. "unsigned long foo = 123UL;"
+ * All millisecond/microsecond intervals should be of type "uint32_t".
+ * All millisecond/microsecond literals should have the UL suffix, e.g. "uint32_t foo = 123UL;"
  * To avoid confusion, variables that represent times or time intervals should be named "fooMillis" or "fooMicros".
  * 
  * Units - this code deals with many different kinds of data: milliseconds, amperes, volts, etc. 
  * Make sure that all variables specify the precise units, e.g. "fooMilliVolts", "fooAmperes", "fooPicoCoulombs"
  * 
- * Data types - this code uses specific data types for different kinds of data, e.g. "unsigned long" for times,
- * "long long" for charges in picoCoulombs, etc. Make sure to consistently use the correct data type for each variable,
- * and make sure your literals have the correct suffix, e.g. "123LL" for long long, "123UL" for unsigned long.
+ * Data types - this code uses specific data types for different kinds of data, e.g. "uint32_t" for times,
+ * "int64_t" for charges in picoCoulombs, etc. Make sure to consistently use the correct data type for each variable,
+ * and make sure your literals have the correct suffix, e.g. "123LL" for int64_t, "123UL" for uint32_t.
  * If you don't do this, the compiler will sometimes generate code that doesn't work the way you expect! Beware!
  */
 #include "Main.h"
@@ -52,7 +52,7 @@ const char* const CHARGER_STATUS_NAMES[] = { "No", "Charging", "Full", "Error" }
 
 // How many milliseconds should there be between readings of the fan speed. A smaller value will update
 // more often, while a higher value will give more accurate and smooth readings.
-const unsigned long FAN_SPEED_READING_INTERVAL = 1000UL;
+const uint32_t FAN_SPEED_READING_INTERVAL = 1000UL;
 
 /* Here are measured values for fan RPM for the San Ace 9GA0412P3K011
    %    MIN     MAX     AVG
@@ -80,21 +80,21 @@ const FanSpeed DEFAULT_FAN_SPEED = fanLow;
 
 // When we change the fan speed, allow at least this many milliseconds before checking the speed.
 // This gives the fan enough time to stabilize at the new speed.
-const unsigned long FAN_STABILIZE_MILLIS = 6000UL;
+const uint32_t FAN_STABILIZE_MILLIS = 6000UL;
 
 /********************************************************************
  * Button constants
  ********************************************************************/
 
 // The user must push a button for at least this many milliseconds.
-const unsigned long BUTTON_DEBOUNCE_MILLIS = 1000UL;
+const uint32_t BUTTON_DEBOUNCE_MILLIS = 1000UL;
 
 // The power off button needs a very short debounce interval,
 // so it can do a little song and dance before taking effect.
-const unsigned long POWER_OFF_BUTTON_DEBOUNCE_MILLIS = 50UL;
+const uint32_t POWER_OFF_BUTTON_DEBOUNCE_MILLIS = 50UL;
 
 // The power off button only takes effect if the user holds it pressed for at least this long.
-const unsigned long POWER_OFF_BUTTON_HOLD_MILLIS = 1000UL;
+const uint32_t POWER_OFF_BUTTON_HOLD_MILLIS = 1000UL;
 
 /********************************************************************
  * Alert constants
@@ -106,9 +106,9 @@ const int fanRPMLEDs[] = { FAN_LOW_LED_PIN, FAN_MED_LED_PIN, FAN_HIGH_LED_PIN, -
 const int* const alertLEDs[] = { 0, batteryLowLEDs, fanRPMLEDs }; // Indexed by enum Alert.
 
 // What are the on & off durations for the pulsed lights and buzzer for each type of alert. 
-const unsigned long batteryAlertMillis[] = { 1000UL, 1000UL };
-const unsigned long fanAlertMillis[] = { 200UL, 200UL };
-const unsigned long* const alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
+const uint32_t batteryAlertMillis[] = { 1000UL, 1000UL };
+const uint32_t fanAlertMillis[] = { 200UL, 200UL };
+const uint32_t* const alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis }; // Indexed by enum Alert.
 
 // A "low battery" alarm is in effect whenever the battery level is at or below the "urgent" amount.
 // If a charger is connected then the red LED flashes until the level is above the urgent amount,
@@ -135,7 +135,7 @@ void Main::setLED(const int pin, int onOff) {
 }
 
 // TEMP - FOR DEBUGGING
-void flashLED(const int pin, const unsigned int millis) {
+void flashLED(const int pin, const uint16_t millis) {
     hw.digitalWrite(pin, LED_ON);
     if (millis) hw.delay(millis);
     hw.digitalWrite(pin, LED_OFF);
@@ -166,7 +166,7 @@ void Main::setLEDs(const int* pinList, int onOff)
 }
 
 // Flash all the LEDS for a specified duration and number of flashes.
-void Main::flashAllLEDs(unsigned long millis, int count)
+void Main::flashAllLEDs(uint32_t millis, int count)
 {
     while (count--) {
         allLEDsOn();
@@ -215,7 +215,6 @@ void Main::cancelAlert()
 
 // Turn the buzzer on or off.
 void Main::setBuzzer(int onOff) {
-    //serialPrintf("set buzzer %s", onOff == BUZZER_OFF ? "off" : "on");
     hw.setBuzzer(onOff, BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
     buzzerState = onOff;
 }
@@ -247,7 +246,7 @@ void Main::setFanSpeed(FanSpeed speed)
 
 // Call this periodically to check that the fan RPM is within the expected range for the current FanSpeed.
 void Main::checkForFanAlert() {
-    const unsigned int fanRPM = fanController.getRPM(); 
+    const uint16_t fanRPM = fanController.getRPM(); 
     // Note: we call getRPM() even if we're not going to use the result, because getRPM() works better if you call it often.
 
     // If fan RPM checking is temporarily disabled, then do nothing.
@@ -259,7 +258,7 @@ void Main::checkForFanAlert() {
     }
 
     // If the RPM is too low or too high compared to the expected value, raise an alert.
-    const unsigned int expectedRPM = expectedFanRPM[currentFanSpeed];
+    const uint16_t expectedRPM = expectedFanRPM[currentFanSpeed];
     if ((fanRPM < (LOWEST_FAN_OK_RPM * expectedRPM)) || (fanRPM > (HIGHEST_FAN_OK_RPM * expectedRPM))) {
         raiseAlert(alertFanRPM);
     }
@@ -434,7 +433,7 @@ void Main::nap()
             return;
         }
 
-        unsigned long wakeupTimeMillis = hw.millis();
+        uint32_t wakeupTimeMillis = hw.millis();
         while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
             if (hw.millis() - wakeupTimeMillis > 125UL) { // we're at 1/8 speed, so this is really 1000 ms (8 * 125)
                 hw.setPowerMode(fullPowerMode);
@@ -462,7 +461,7 @@ bool Main::doPowerOffWarning()
 
     // If the user holds the button for long enough, we will return true,
     // which tells the caller to go ahead and enter the off state. 
-    unsigned long startMillis = hw.millis();
+    uint32_t startMillis = hw.millis();
     while (hw.digitalRead(POWER_OFF_PIN) == BUTTON_PUSHED) {
         if (hw.millis() - startMillis > POWER_OFF_BUTTON_HOLD_MILLIS) {
             allLEDsOff();
@@ -527,11 +526,11 @@ void Main::onPowerOffPress()
 void Main::onFanDownPress()
 {
     /* TEMP for testing/debugging: decrease the current battery level by a few percent. */
-    if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
-        battery.DEBUG_incrementPicoCoulombs(-1500000000000000LL);
-        serialPrintf("Charge is %d%", getBatteryPercentFull());
-        return;
-    }
+    //if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
+    //    battery.DEBUG_incrementPicoCoulombs(-1500000000000000LL);
+    //    serialPrintf("Charge is %d%", getBatteryPercentFull());
+    //    return;
+    //}
 
     setFanSpeed((currentFanSpeed == fanHigh) ? fanMedium : fanLow);
 }
@@ -540,11 +539,11 @@ void Main::onFanDownPress()
 void Main::onFanUpPress()
 {
     /* TEMP for testing/debugging: increase the current battery level by a few percent. */
-    if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
-        battery.DEBUG_incrementPicoCoulombs(1500000000000000LL);
-        serialPrintf("Charge is %d%", getBatteryPercentFull());
-        return;
-    }
+    //if (digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {
+    //    battery.DEBUG_incrementPicoCoulombs(1500000000000000LL);
+    //    serialPrintf("Charge is %d%", getBatteryPercentFull());
+    //    return;
+    //}
 
     setFanSpeed((instance->currentFanSpeed == fanLow) ? fanMedium : fanHigh);
 }
@@ -623,6 +622,9 @@ bool Main::setup()
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialBegin(true);
     serialPrintf("%s %s %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, __TIME__, resetFlags);
+    serialPrintf("BATTERY_CAPACITY_PICO_COULOMBS %s", renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS));
+    serialPrintf("CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE %s", renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE));
+    serialPrintf("BATTERY_FULLY_CHARGED_MICROVOLTS %s", renderLongLong(BATTERY_FULLY_CHARGED_MICROVOLTS));
     if (shouldEnterTestMode()) {
         return true;
     }
@@ -758,9 +760,9 @@ void Main::onStatusReport() {
         (ledState[4] == LED_ON) ? "blue" : "---",
         (ledState[5] == LED_ON) ? "blue" : "---",
         (ledState[6] == LED_ON) ? "blue" : "---",
-        (long)(hw.readMicroVolts() / 1000LL),
-        (long)(hw.readMicroAmps() / 1000LL),
-        (long)(battery.getPicoCoulombs() / 1000000000000LL),
+        (int32_t)(hw.readMicroVolts() / 1000LL),
+        (int32_t)(hw.readMicroAmps() / 1000LL),
+        (int32_t)(battery.getPicoCoulombs() / 1000000000000LL),
         getBatteryPercentFull(),
         hw.millis(),hw.micros());
 }

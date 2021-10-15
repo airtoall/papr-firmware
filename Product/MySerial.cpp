@@ -58,7 +58,7 @@ void serialEnd() {
 bool serialActive() {
 	return _serialActive;
 }
-char* renderLongLong(long long num) {
+char* renderLongLong(int64_t num) {
 	// doesn't work for LLONG_MAX + 1, a.k.a. -LLONG_MAX - 1
 
 	if (!_serialActive) return "";
@@ -106,9 +106,9 @@ char* renderLongLong(long long num) {
 
 /* code to test renderLongLong
 
-    long long a = 922337203685475807LL;
-    long long b = 382178998712349833LL;
-    long long c = a + b; // should be 1304516202397825640
+    int64_t a = 922337203685475807LL;
+    int64_t b = 382178998712349833LL;
+    int64_t c = a + b; // should be 1304516202397825640
     serialPrintf("1: %s %s %s", renderLongLong(a), renderLongLong(b), renderLongLong(c));
     c += 100;
     serialPrintf("2: %s", renderLongLong(c));
@@ -121,6 +121,6 @@ char* renderLongLong(long long num) {
     a = LLONG_MAX;
     b = -a;
     c = a + b;
-    long long d = a;
+    int64_t d = a;
     serialPrintf("4: %s %s %s %s", renderLongLong(a), renderLongLong(b), renderLongLong(c), renderLongLong(d));
 */

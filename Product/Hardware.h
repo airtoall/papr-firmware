@@ -15,6 +15,7 @@
 #include "Arduino.h"
 #include <avr/wdt.h> 
 #endif
+#include <stdint.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -113,24 +114,24 @@ const int SERIAL_TX_PIN = 1;          // PD1   output  Can be used by Serial, us
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// "long long" has 18-19 decimal digits of precision. Watch out for overflow!
-const long long NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;                  // See note below.
-const long long NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;                    // 0 to 1023 corresponds to 0 to 30 volts. See note below.
-const long long RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // The manufacturers rated battery capacity in mAh
-const long long RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs 
-const long long BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;         // Battery capacity when it gets old. We use this to be safe.
-const long long BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
-const long long BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // 2,100 coulombs the minimum charge (the BMS shuts down the battery around this level)
-const long long CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL; // Cutoff current is calculated relative to battery capacity. C / 50 is often used.
-const long long CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;    // to allow for variations in the readings
+// "int64_t" has 18-19 decimal digits of precision. Watch out for overflow!
+const int64_t NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;                  // See note below.
+const int64_t NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;                    // 0 to 1023 corresponds to 0 to 30 volts. See note below.
+const int64_t RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // The manufacturers rated battery capacity in mAh
+const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs 
+const int64_t BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;         // Battery capacity when it gets old. We use this to be safe.
+const int64_t BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
+const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // 2,100 coulombs the minimum charge (the BMS shuts down the battery around this level)
+const int64_t CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL; // Cutoff current is calculated relative to battery capacity. C / 50 is often used.
+const int64_t CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;    // to allow for variations in the readings
 
 
 // When the battery is fully charged it will be at nominally 4.2V / cell or 25.2 volts for our 6 cells.
 // The tolerance range is 4.15 to 4.25 volts per cell, so minimum 24.9 volts.
 // The ADC isn't all that accurate, maybe +/-5% worst case, so we consider any voltage over 0.95 x 24.9 to be fully charged.
-const long long MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4150000LL;
-const long long MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS * 6LL;
-const long long BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS * 0.95;
+const int64_t MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4150000LL;
+const int64_t MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS * 6LL;
+const int64_t BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS * 0.95;
 
 /*
 Here is a note from Brent Bolton about how AMPS_PER_CHARGE_FLOW_UNIT and VOLTS_PER_VOLTAGE_UNIT are determined:
@@ -198,9 +199,9 @@ public:
     inline int digitalRead(uint8_t pin) { return ::digitalRead(pin); }
     inline int analogRead(uint8_t pin) { return ::analogRead(pin); }
     inline void analogWrite(uint8_t pin, int val) { ::analogWrite(pin, val); }
-    inline unsigned long millis(void) { return ::millis(); }
-    inline unsigned long micros(void) { return ::micros(); }
-    inline void delay(unsigned long ms) { ::delay(ms); }
+    inline uint32_t millis(void) { return ::millis(); }
+    inline uint32_t micros(void) { return ::micros(); }
+    inline void delay(uint32_t ms) { ::delay(ms); }
     inline void wdt_enable(const uint8_t value) { ::wdt_enable(value); }
     inline void wdt_disable() { ::wdt_disable(); }
     inline void wdt_reset_() { wdt_reset(); } // wdt_reset is a macro so we can't use "::"
@@ -236,28 +237,28 @@ public:
     void handleInterrupt();
 
     // Read the battery/charger voltage. Result is microvolts in the range 0 to 30,000,000
-    long long readMicroVolts();
+    int64_t readMicroVolts();
 
     // Read the battery current in microamperes in the range -6,000,000 to +6,000,000.
     // The value is positive when charging, negative when discharging.
-    long long readMicroAmps();
+    int64_t readMicroAmps();
 
     // Turn the buzzer on or off
-    void setBuzzer(int onOff, long frequencyHz, int dutyCyclePercent);
+    void setBuzzer(int onOff, int32_t frequencyHz, int dutyCyclePercent);
 
     // There can only be one instance of this object.
     static Hardware instance;
 
 private:
     // Data for interrupt handling
-    unsigned int powerOnButtonState;
-    unsigned int fanRPMState;
+    uint16_t powerOnButtonState;
+    uint16_t fanRPMState;
     InterruptCallback* powerOnButtonInterruptCallback;
     InterruptCallback* fanRPMInterruptCallback;
     void updateInterruptHandling();
  
     PowerMode powerMode; // which mode are we currently in?
-    long long microAmps; // we use this to help smooth battery current readings.
+    int64_t microAmps; // we use this to help smooth battery current readings.
 
     // initialization
     Hardware();

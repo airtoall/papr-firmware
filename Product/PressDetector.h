@@ -1,19 +1,18 @@
-#pragma once
-#include "Hardware.h"
-
 // An object that can detect button presses, and call 
 // a specified function when the button is pressed and released.
 // We do "debouncing", which means that a press is detected
 // only if the button is held for a specified period. 
+#pragma once
+#include "Hardware.h"
 
 class PressDetector {
 private:
-    unsigned int _pin;
-    unsigned long _requiredMillis;
+    uint16_t _pin;
+    uint32_t _requiredMillis;
     void (*_callback)();
     void (*_releaseCallback)();
     int _currentState;
-    unsigned long _pressMillis;
+    uint32_t _pressMillis;
     bool _callbackCalled;
 
 public:
@@ -22,7 +21,7 @@ public:
     // requiredMillis:  a press will be detected only if the button is held for at least this long
     // callback:        the function to call when the button is pressed
     // releaseCallback: (optional) the function to call when the button is released
-    PressDetector(int pin, unsigned long requiredMillis, void(*callback)(), void(*releaseCallback)() = 0)
+    PressDetector(int pin, uint32_t requiredMillis, void(*callback)(), void(*releaseCallback)() = 0)
         : _pin(pin), _requiredMillis(requiredMillis), _callback(callback), _releaseCallback(releaseCallback),
         _currentState(BUTTON_RELEASED), _pressMillis(0UL), _callbackCalled(true) {}
 

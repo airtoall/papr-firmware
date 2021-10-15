@@ -103,16 +103,16 @@ void Hardware::setClockPrescaler(int prescalerSelect)
     interrupts();
 }
 
-long long Hardware::readMicroVolts() {
-    return ((long long)analogRead(BATTERY_VOLTAGE_PIN) * NANO_VOLTS_PER_VOLTAGE_UNIT) / 1000LL;
+int64_t Hardware::readMicroVolts() {
+    return ((int64_t)analogRead(BATTERY_VOLTAGE_PIN) * NANO_VOLTS_PER_VOLTAGE_UNIT) / 1000LL;
 }
 
-long long Hardware::readMicroAmps() {
-    long currentReading = analogRead(CHARGE_CURRENT_PIN);
-    long referenceReading = analogRead(REFERENCE_VOLTAGE_PIN);
-    long long readingMicroAmps = (((long long)(referenceReading - currentReading)) * NANO_AMPS_PER_CHARGE_FLOW_UNIT) / 1000LL;
+int64_t Hardware::readMicroAmps() {
+    int32_t currentReading = analogRead(CHARGE_CURRENT_PIN);
+    int32_t referenceReading = analogRead(REFERENCE_VOLTAGE_PIN);
+    int64_t readingMicroAmps = (((int64_t)(referenceReading - currentReading)) * NANO_AMPS_PER_CHARGE_FLOW_UNIT) / 1000LL;
 
-    const long long lowPassFilterN = 10LL;
+    const int64_t lowPassFilterN = 10LL;
     microAmps = ((microAmps * lowPassFilterN) + readingMicroAmps) / (lowPassFilterN + 1LL);
     return microAmps;
 }
@@ -128,7 +128,7 @@ void Hardware::handleInterrupt() {
     if (powerOnButtonInterruptCallback) {
         // A callback has been registered for the Power On Button interrupt. 
         // Only call it if the button state has changed.
-        unsigned int newPowerOnButtonState = digitalRead(POWER_ON_PIN);
+        uint16_t newPowerOnButtonState = digitalRead(POWER_ON_PIN);
         if (newPowerOnButtonState != powerOnButtonState) {
             powerOnButtonState = newPowerOnButtonState;
             powerOnButtonInterruptCallback->callback();
@@ -138,7 +138,7 @@ void Hardware::handleInterrupt() {
     if (fanRPMInterruptCallback) {
         // A callback has been registered for the Fan RPM interrupt. 
         // Only call it if the signal state has changed.
-        unsigned int newFanRPMState = digitalRead(FAN_RPM_PIN);
+        uint16_t newFanRPMState = digitalRead(FAN_RPM_PIN);
         if (newFanRPMState != fanRPMState) {
             fanRPMState = newFanRPMState;
             fanRPMInterruptCallback->callback();
@@ -193,8 +193,6 @@ void Hardware::setFanRPMInterruptCallback(InterruptCallback* callback)
 void Hardware::setPowerMode(PowerMode mode)
 {
     if (mode == fullPowerMode) {
-        /* TEMP */ //digitalWrite(FAN_MED_LED_PIN, LED_ON);
-
         // Set the PCB to Full Power mode.
         digitalWrite(BOARD_POWER_PIN, BOARD_POWER_ON);
 
@@ -216,7 +214,6 @@ void Hardware::setPowerMode(PowerMode mode)
         delay(30UL);
 
         // We are now running at low power, low speed.
-        /* TEMP */ //digitalWrite(FAN_MED_LED_PIN, LED_OFF);
     }
 
     powerMode = mode;
@@ -232,7 +229,7 @@ void Hardware::setup() {
     initializeDevices();
 }
 
-void Hardware::setBuzzer(int onOff, long frequencyHz, int dutyCyclePercent) {
+void Hardware::setBuzzer(int onOff, int32_t frequencyHz, int dutyCyclePercent) {
     if (onOff) {
         startPB2PWM(frequencyHz, dutyCyclePercent);
     } else {
@@ -241,7 +238,7 @@ void Hardware::setBuzzer(int onOff, long frequencyHz, int dutyCyclePercent) {
 }
 
 // This global function is used in a couple of places that don't have access to "Hardware.h" 
-unsigned long getMillis()
+uint32_t getMillis()
 {
     return Hardware::instance.millis();
 }

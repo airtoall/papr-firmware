@@ -2,15 +2,16 @@
 // call a function at a specied future time. There are lots of
 // Timer libraries out there that can do much more - this one does less.
 #pragma once
+#include <stdint.h>
 
-extern unsigned long getMillis();
+extern uint32_t getMillis();
 
 class OneTimeCallback {
 public:
     OneTimeCallback(void (*callback)()) : _intervalMillis(0UL), _callback(callback) {}
 
     // schedules a callback to occur at the specified time interval from now
-    void start(unsigned long intervalMillis) {
+    void start(uint32_t intervalMillis) {
         _intervalMillis = intervalMillis;
         _intervalStartMillis = getMillis();
     }
@@ -28,7 +29,7 @@ public:
     }
 
 private:
-    unsigned long _intervalMillis;
-    unsigned long _intervalStartMillis;
+    uint32_t _intervalMillis;
+    uint32_t _intervalStartMillis;
     void (*_callback)();
 };

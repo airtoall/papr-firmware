@@ -3,13 +3,13 @@
 // timer libraries out there that can do much more - this one does less.
 #pragma once
 
-extern unsigned long getMillis();
+extern uint32_t getMillis();
 
 class PeriodicCallback {
 public:
     PeriodicCallback(void (*callback)()) : _callback(callback), _active(false) {}
 
-    void start(unsigned long intervalMillis) {
+    void start(uint32_t intervalMillis) {
         _active = true;
         _intervalMillis = intervalMillis;
         _intervalStartMillis = getMillis();
@@ -17,7 +17,7 @@ public:
 
     void update() {
         if (_active) {
-            unsigned long now = getMillis();
+            uint32_t now = getMillis();
             if ((now - _intervalStartMillis) > _intervalMillis) {
                 _intervalStartMillis = now;
                 (*_callback)();
@@ -34,8 +34,8 @@ public:
     }
 
 private:
-    unsigned long _intervalMillis;
-    unsigned long _intervalStartMillis;
+    uint32_t _intervalMillis;
+    uint32_t _intervalStartMillis;
     bool _active;
     void (*_callback)();
 };

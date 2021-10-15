@@ -19,7 +19,7 @@
 //
 // For complete details about the timer and its registers, see the "Timer 1" chapter of the ATMega328p data sheet.
 
-void startPB2PWM(long frequencyHz, int dutyCyclePercent)
+void startPB2PWM(int32_t frequencyHz, int dutyCyclePercent)
 {
     const int pinNumber = 10; // 10 = BUZZER_PIN = PB2 = OC1B
     const int prescale = 1;

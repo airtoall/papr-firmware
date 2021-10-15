@@ -1,10 +1,10 @@
-#include "Arduino.h"
 #include "FanController.h"
+#include "Arduino.h"
 #include "Hardware.h"
 
 #define hw Hardware::instance
 
-FanController::FanController(byte sensorPin, unsigned long sensorThreshold, byte pwmPin)
+FanController::FanController(byte sensorPin, uint32_t sensorThreshold, byte pwmPin)
 {
 	_sensorPin = sensorPin;
 	_sensorThreshold = sensorThreshold;
@@ -26,8 +26,8 @@ void FanController::end()
 	_detachInterrupt();
 }
 
-unsigned int FanController::getRPM() {
-	unsigned long elapsed = hw.millis() - _lastMillis;
+uint16_t FanController::getRPM() {
+	uint32_t elapsed = hw.millis() - _lastMillis;
 	if (elapsed > _sensorThreshold)
 	{
 		noInterrupts();

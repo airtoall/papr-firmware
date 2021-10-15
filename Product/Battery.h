@@ -1,10 +1,11 @@
-#pragma once
 /*
  * Battery.h
  *
  * The Battery class encapsulates all the code that manages the battery. This class provides
  * 2 key pieces of information: (1) how full is the battery? (2) is the charger attached? 
  */
+#pragma once
+#include <stdint.h>
 
  // The charger can be in various states.
 enum ChargerStatus {
@@ -32,10 +33,10 @@ public:
     //
     // You should not assume that this is accurate to within a picoCoulomb. The accuracy depends on
     // the accuracy of the current sensor hardware and the MCU clock, so it's probably only
-    // within a few percent. The reason we use the "long long" data type is to minimize
-    // cumulative rounding errors in the coulomb counting algorithm. We use "long long" instead of
+    // within a few percent. The reason we use the "int64_t" data type is to minimize
+    // cumulative rounding errors in the coulomb counting algorithm. We use "int64_t" instead of
     // "double" because our C++ compiler doesn't fully support double.
-    long long getPicoCoulombs() { return picoCoulombs; }
+    int64_t getPicoCoulombs() { return picoCoulombs; }
 
     // You must call this function periodically, ideally every few milliseconds. Exception: we don't
     // expect you to call it when the system is sleeping (and therefore consuming neglible power).
@@ -46,7 +47,7 @@ public:
 
     // For testing and debugging: change the current coulomb count, to fool the system into
     // thinking the battery is more (or less) charged that it really is.
-    void DEBUG_incrementPicoCoulombs(long long increment);
+    void DEBUG_incrementPicoCoulombs(int64_t increment);
 
     // When the system is starting up, call this function.
     void initializeCoulombCount();
@@ -61,21 +62,21 @@ private:
     // because of the nature of Li-ion batteries, but it's better than nothing. Anyway,
     // we only rely on the estimate until the first time the battery becomes fully charged,
     // at which time we know how much charge it has.
-    static long long estimatePicoCoulombsFromVoltage(long long microVolts);
+    static int64_t estimatePicoCoulombsFromVoltage(int64_t microVolts);
 
     // Return the voltage that the battery will have when it is fully charged.
-    static long long getFullyChargedMicrovolts();
+    static int64_t getFullyChargedMicrovolts();
 
     // Update the saved value of the battery's fully-charged voltage.
-    static void updateFullyChargedMicrovolts(long long microVolts);
+    static void updateFullyChargedMicrovolts(int64_t microVolts);
 
-    long long picoCoulombs; // How much charge is in the battery right now.
-    long long microVolts;   // The voltage right now.
-    unsigned long lastCoulombsUpdateMicroSecs;// microsecond timestamp of when we last sampled the current flow
-    unsigned long chargeStartMilliSecs;       // millisecond timestamp of when the battery charger started up
-    unsigned long lastVoltageChangeMilliSecs; // millisecond timestamp of when the battery voltage last changed
+    int64_t picoCoulombs; // How much charge is in the battery right now.
+    int64_t microVolts;   // The voltage right now.
+    uint32_t lastCoulombsUpdateMicroSecs;// microsecond timestamp of when we last sampled the current flow
+    uint32_t chargeStartMilliSecs;       // millisecond timestamp of when the battery charger started up
+    uint32_t lastVoltageChangeMilliSecs; // millisecond timestamp of when the battery voltage last changed
     bool prevIsChargerConnected;      // what was "isChargerConnected" the last time we checked
-    long long prevMicroVolts; // what was "microVolts" the last time we checked
+    int64_t prevMicroVolts; // what was "microVolts" the last time we checked
     bool maybeChargingFinished;  // If true, then we suspect that the battery is now fully charged
-    unsigned long maybeChargingFinishedMilliSecs;  // millisecond timestamp of when we first suspected charge done
+    uint32_t maybeChargingFinishedMilliSecs;  // millisecond timestamp of when we first suspected charge done
 };

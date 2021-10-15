@@ -1,4 +1,6 @@
 // MiscConstants.h
+#pragma once
+#include <stdint.h>
 
 // A string that identifies this product's version and build.
 extern const char* PRODUCT_ID;
@@ -12,8 +14,8 @@ extern const char* FAN_SPEED_NAMES[];
 extern const int fanDutyCycles[];
 
 // The expected RPM for each fan speed. Indexed by FanSpeed.
-extern const unsigned int expectedFanRPM[];
+extern const uint16_t expectedFanRPM[];
 
-const long BUZZER_FREQUENCY = 2500; // in Hz
+const int32_t BUZZER_FREQUENCY = 2500; // in Hz
 
 const int BUZZER_DUTYCYCLE = 50; // in percent
