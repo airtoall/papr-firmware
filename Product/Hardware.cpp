@@ -2,6 +2,7 @@
  * Hardware.cpp
  */
 #include "Hardware.h"
+#include "PB2PWM.h"
 #include <avr/interrupt.h>
 
 Hardware::Hardware() :powerOnButtonInterruptCallback(0), fanRPMInterruptCallback(0), microAmps(0LL) { }
@@ -229,6 +230,14 @@ void Hardware::setup() {
     // Initialize the hardware
     configurePins();
     initializeDevices();
+}
+
+void Hardware::setBuzzer(int onOff, long frequencyHz, int dutyCyclePercent) {
+    if (onOff) {
+        startPB2PWM(frequencyHz, dutyCyclePercent);
+    } else {
+        stopPB2PWM();
+    }
 }
 
 // This global function is used in a couple of places that don't have access to "Hardware.h" 

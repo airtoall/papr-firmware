@@ -1,5 +1,6 @@
 #include "Battery.h"
 #include "Hardware.h"
+#include "MySerial.h"
 
 #define hw Hardware::instance
 
@@ -27,8 +28,10 @@
  * 
  * The PCB provides information about battery and charger on 4 input pins:
  * BATTERY_VOLTAGE_PIN - a 10-bit ADC that gives voltage. If no charger is connected, this is 
- *                       the battery's voltage. If a charger is connected, then the charger and battery are
- *                       effectively wired together so this is the voltage of both.
+ *                       the battery's voltage. If a charger is connected and PWR_EN is on,
+ *                       then the charger and battery are effectively wired together so this
+ *                       is the voltage of both. If a charger is connected and PWR_EN is off,
+ *                       then charger and battery voltage can differ by up to a volt.
  * CHARGE_CURRENT_PIN - a 10-bit ADC that gives the charge flowing into or out of the battery. This value
  *                      must be combined with the REFERENCE_VOLTAGE_PIN reading to get a proper result. 
  *                      When no charger is connected, charge will be flowing out of the battery. When a
@@ -41,10 +44,8 @@
 
 // Some parameters used by the coulomb counting algorithm.
 const unsigned long BATTERY_VOLTAGE_UPDATE_INTERVAL_MILLISECS = 500UL;
-const unsigned long CHARGER_WINDDOWN_TIME_MILLIS = 1UL * 60UL * 1000UL; // 1 minute in milliseconds
-const long long CHARGE_MICRO_AMPS_WHEN_FULL = 200000LL; // 0.2 Amps
-const long long CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = 180000LL; // CHARGE_MICRO_AMPS_WHEN_FULL * 0.9, to allow for variations in the readings
-const long long BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD = 100000LL; // 0.1 volts
+const unsigned long CHARGER_WIND_DOWN_TIME_MILLIS = 1UL * 60UL * 1000UL;               // 1 minute in milliseconds
+const long long BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD = 100000LL;                      // 0.1 volts
 
 // Whenever we wake up from sleeping, we have to re-inititialize all the data used for coulomb counting.
 // We don't coulomb count when the system is sleeping, because the amount of current flow is 
@@ -112,7 +113,7 @@ ChargerStatus Battery::getChargerStatus() {
     // Maybe the battery is full.
     // We use a fudged value here because when the battery is full, it immediately starts draining
     // (because the device is running), so we consider the battery full even if a few coulombs have drained.
-    if (picoCoulombs > BATTERY_CAPACITY_PICO_COULOMBS_FUDGE) return chargerFull;
+    if (picoCoulombs > BATTERY_CAPACITY_PICO_COULOMBS_ALMOST) return chargerFull;
 
     // The charger is connected, but charging current is not flowing even though the battery is not full.
     // There must be some kind of error.
@@ -127,6 +128,7 @@ void Battery::updateBatteryTimers()
     bool isChargerConnectedNow = isChargerConnected();
     if (isChargerConnectedNow && !prevIsChargerConnected) {
         // the charger was just connected
+        //serialPrintln(F("charger connected"));
         chargeStartMilliSecs = hw.millis();
     }
     prevIsChargerConnected = isChargerConnectedNow;
@@ -140,6 +142,7 @@ void Battery::updateBatteryTimers()
 
     if (abs(microVolts - prevMicroVolts) >= BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD) {
         // voltage has changed since last time we checked
+        //serialPrintln(F("voltage changed"));
         lastVoltageChangeMilliSecs = hw.millis();
         prevMicroVolts = microVolts;
     }
@@ -175,7 +178,7 @@ void Battery::update()
     // assume the battery is full, which can happen if we over-estimated the fullness
     // in estimatePicoCoulombsFromVoltage().
     picoCoulombs = picoCoulombs + deltaPicoCoulombs;
-    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS_FUDGE);
+    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS_ALMOST);
  
     // if the battery is charging, and has now reached the maximum charge,
     // we will set the battery coulomb counter to 100% of the battery capacity.
@@ -187,8 +190,8 @@ void Battery::update()
     unsigned long nowMillis = hw.millis();
     if ((picoCoulombs != BATTERY_CAPACITY_PICO_COULOMBS) &&
         isChargerConnected() &&                                                              // ...the charger is attached, AND
-        ((nowMillis - chargeStartMilliSecs) > CHARGER_WINDDOWN_TIME_MILLIS) &&       // ...we've been charging for a few minutes, AND
-        ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WINDDOWN_TIME_MILLIS) && // ...the battery voltage hasn't changed for a few minutes, AND
+        ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS) &&       // ...we've been charging for a few minutes, AND
+        ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS) && // ...the battery voltage hasn't changed for a few minutes, AND
         (microVolts >= getFullyChargedMicrovolts()) &&                               // ...the battery voltage is what we expect for a full battery
         (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL))                         // ...the current flow rate is quite low
     {
@@ -197,6 +200,7 @@ void Battery::update()
         // *completely* finished. Let's see if we stay in the "charge finished" state
         // for a few seconds.
         if (maybeChargingFinished) {
+            //serialPrintln(F("maybeChargingFinished"));
             if (nowMillis - maybeChargingFinishedMilliSecs > 5000UL) {
                 // We've been in "charge finished" state for long enough. It's now safe
                 // to assume that the battery is fully charged.

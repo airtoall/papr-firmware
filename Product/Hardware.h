@@ -114,16 +114,23 @@ const int SERIAL_TX_PIN = 1;          // PD1   output  Can be used by Serial, us
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // "long long" has 18-19 decimal digits of precision. Watch out for overflow!
-const long long NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;
-const long long NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;                    // 0 to 1023 corresponds to 0 to 30 volts
-const long long BATTERY_CAPACITY_PICO_COULOMBS = 22680000000000000LL;        // 25,200 coulombs (rated battery capacity) * 0.9 (fudge factor for when battery gets old)
-const long long BATTERY_CAPACITY_PICO_COULOMBS_FUDGE = 22453000000000000LL;  // battery capacity * 0.99
+const long long NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;                  // See note below.
+const long long NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;                    // 0 to 1023 corresponds to 0 to 30 volts. See note below.
+const long long RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // The manufacturers rated battery capacity in mAh
+const long long RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs 
+const long long BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;         // Battery capacity when it gets old. We use this to be safe.
+const long long BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
 const long long BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // 2,100 coulombs the minimum charge (the BMS shuts down the battery around this level)
+const long long CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL; // Cutoff current is calculated relative to battery capacity. C / 50 is often used.
+const long long CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;    // to allow for variations in the readings
+
 
 // When the battery is fully charged it will be at nominally 4.2V / cell or 25.2 volts for our 6 cells.
 // The tolerance range is 4.15 to 4.25 volts per cell, so minimum 24.9 volts.
 // The ADC isn't all that accurate, maybe +/-5% worst case, so we consider any voltage over 0.95 x 24.9 to be fully charged.
-const long long BATTERY_FULLY_CHARGED_MICROVOLTS = 23655000L;
+const long long MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4150000LL;
+const long long MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS * 6LL;
+const long long BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS * 0.95;
 
 /*
 Here is a note from Brent Bolton about how AMPS_PER_CHARGE_FLOW_UNIT and VOLTS_PER_VOLTAGE_UNIT are determined:
@@ -234,6 +241,9 @@ public:
     // Read the battery current in microamperes in the range -6,000,000 to +6,000,000.
     // The value is positive when charging, negative when discharging.
     long long readMicroAmps();
+
+    // Turn the buzzer on or off
+    void setBuzzer(int onOff, long frequencyHz, int dutyCyclePercent);
 
     // There can only be one instance of this object.
     static Hardware instance;
