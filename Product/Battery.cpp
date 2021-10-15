@@ -67,7 +67,7 @@ void Battery::wakeUp() {
 //
 // Caveat: the relationship between voltage and state-of-charge in Li-ion batteries
 // is very unreliable. The best way to determine the true state-of-charge is to fully charge the battery.
-long long Battery::estimatePicoCoulombsFromVoltage(long long microVolts) {    
+long long Battery::estimatePicoCoulombsFromVoltage(long long microVolts) {   
     const long milliVolts = ((long)microVolts) / 1000L;
     long coulombs;
 
@@ -112,7 +112,7 @@ ChargerStatus Battery::getChargerStatus() {
     // Maybe the battery is full.
     // We use a fudged value here because when the battery is full, it immediately starts draining
     // (because the device is running), so we consider the battery full even if a few coulombs have drained.
-    if (picoCoulombs >= BATTERY_CAPACITY_PICO_COULOMBS_FUDGE) return chargerFull;
+    if (picoCoulombs > BATTERY_CAPACITY_PICO_COULOMBS_FUDGE) return chargerFull;
 
     // The charger is connected, but charging current is not flowing even though the battery is not full.
     // There must be some kind of error.
@@ -170,8 +170,12 @@ void Battery::update()
     long long deltaPicoCoulombs = chargeFlowMicroAmps * deltaMicroSecs;
 
     // update our counter of the battery charge. Don't let the number get out of range.
+    // We don't allow the counter to reach the full capacity here. It can only reach
+    // full if we pass the 5-point test below. This ensures that we don't prematurely
+    // assume the battery is full, which can happen if we over-estimated the fullness
+    // in estimatePicoCoulombsFromVoltage().
     picoCoulombs = picoCoulombs + deltaPicoCoulombs;
-    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
+    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS_FUDGE);
  
     // if the battery is charging, and has now reached the maximum charge,
     // we will set the battery coulomb counter to 100% of the battery capacity.
