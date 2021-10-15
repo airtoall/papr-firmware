@@ -43,6 +43,7 @@
 const unsigned long BATTERY_VOLTAGE_UPDATE_INTERVAL_MILLISECS = 500UL;
 const unsigned long CHARGER_WINDDOWN_TIME_MILLIS = 1UL * 60UL * 1000UL; // 1 minute in milliseconds
 const long long CHARGE_MICRO_AMPS_WHEN_FULL = 200000LL; // 0.2 Amps
+const long long CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = 180000LL; // CHARGE_MICRO_AMPS_WHEN_FULL * 0.9, to allow for variations in the readings
 const long long BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD = 100000LL; // 0.1 volts
 
 // Whenever we wake up from sleeping, we have to re-inititialize all the data used for coulomb counting.
@@ -103,10 +104,15 @@ ChargerStatus Battery::getChargerStatus() {
     if (!isChargerConnected()) return chargerNotConnected;
 
     // Maybe a charging current is flowing.
-    if (hw.readMicroAmps() > CHARGE_MICRO_AMPS_WHEN_FULL) return chargerCharging;
+    // We use a fudged value here because the microAmp readings have some random variation,
+    // and we need to be sure that the reading is solidly below CHARGE_MICRO_AMPS_WHEN_FULL
+    // in order to claim that we are not charging.
+    if (hw.readMicroAmps() > CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE) return chargerCharging;
 
     // Maybe the battery is full.
-    if (picoCoulombs >= BATTERY_CAPACITY_PICO_COULOMBS) return chargerFull;
+    // We use a fudged value here because when the battery is full, it immediately starts draining
+    // (because the device is running), so we consider the battery full even if a few coulombs have drained.
+    if (picoCoulombs >= BATTERY_CAPACITY_PICO_COULOMBS_FUDGE) return chargerFull;
 
     // The charger is connected, but charging current is not flowing even though the battery is not full.
     // There must be some kind of error.
