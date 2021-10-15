@@ -1,5 +1,6 @@
 #include "Battery.h"
 #include "Hardware.h"
+#include "MySerial.h"
 
 #define hw Hardware::instance
 
@@ -127,6 +128,7 @@ void Battery::updateBatteryTimers()
     bool isChargerConnectedNow = isChargerConnected();
     if (isChargerConnectedNow && !prevIsChargerConnected) {
         // the charger was just connected
+        //serialPrintln(F("charger connected"));
         chargeStartMilliSecs = hw.millis();
     }
     prevIsChargerConnected = isChargerConnectedNow;
@@ -140,6 +142,7 @@ void Battery::updateBatteryTimers()
 
     if (abs(microVolts - prevMicroVolts) >= BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD) {
         // voltage has changed since last time we checked
+        //serialPrintln(F("voltage changed"));
         lastVoltageChangeMilliSecs = hw.millis();
         prevMicroVolts = microVolts;
     }
@@ -197,6 +200,7 @@ void Battery::update()
         // *completely* finished. Let's see if we stay in the "charge finished" state
         // for a few seconds.
         if (maybeChargingFinished) {
+            //serialPrintln(F("maybeChargingFinished"));
             if (nowMillis - maybeChargingFinishedMilliSecs > 5000UL) {
                 // We've been in "charge finished" state for long enough. It's now safe
                 // to assume that the battery is fully charged.

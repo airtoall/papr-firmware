@@ -623,13 +623,6 @@ bool Main::setup()
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialBegin(true);
     serialPrintf("%s %s %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, __TIME__, resetFlags);
-    serialPrintf("RATED_BATTERY_CAPACITY_PICO_COULOMBS %s", renderLongLong(RATED_BATTERY_CAPACITY_PICO_COULOMBS));
-    serialPrintf("BATTERY_CAPACITY_PICO_COULOMBS %s", renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS));
-    serialPrintf("BATTERY_CAPACITY_PICO_COULOMBS_ALMOST %s", renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS_ALMOST));
-    serialPrintf("MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS %s", renderLongLong(MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS));
-    serialPrintf("BATTERY_FULLY_CHARGED_MICROVOLTS %s", renderLongLong(BATTERY_FULLY_CHARGED_MICROVOLTS));
-    serialPrintf("CHARGE_MICRO_AMPS_WHEN_FULL %s", renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL));
-    serialPrintf("CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE %s", renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE));
     if (shouldEnterTestMode()) {
         return true;
     }
