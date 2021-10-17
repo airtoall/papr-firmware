@@ -36,6 +36,8 @@
 
 #define SERIAL_DEBUG // define this symbol to enable debug output to the serial port
 
+#define WATCHDOG_TIMEOUT WDTO_2S
+
  // The Hardware object gives access to all the microcontroller hardware such as pins and timers. Please always use this object,
  // and never access any hardware or Arduino APIs directly. This gives us the option of using a fake hardware object for unit testing.
 #define hw Hardware::instance
@@ -429,7 +431,7 @@ void Main::nap()
         if (battery.isChargerConnected()) {
             hw.setPowerMode(fullPowerMode);
             enterState(stateOffCharging);
-            hw.wdt_enable(WDTO_8S);
+            hw.wdt_enable(WATCHDOG_TIMEOUT);
             return;
         }
 
@@ -439,7 +441,7 @@ void Main::nap()
                 hw.setPowerMode(fullPowerMode);
                 enterState(stateOn);
                 while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {}
-                hw.wdt_enable(WDTO_8S);
+                hw.wdt_enable(WATCHDOG_TIMEOUT);
                 return;
             }
         }
@@ -460,7 +462,12 @@ bool Main::doPowerOffWarning()
     setBuzzer(BUZZER_ON);
 
     // If the user holds the button for long enough, we will return true,
-    // which tells the caller to go ahead and enter the off state. 
+    // which tells the caller to go ahead and enter the off state.
+    // (Note: this loop runs for about 1 second, during which time the
+    // main loop doesn't run, and therefore the watchdog timer may 
+    // fire, if this loop runs too long. Currently the WDT is 2 seconds
+    // and this loop is 1 second, so no problem. But there could be 
+    // trouble if you make this loop slower, or reduce the WDT interval.)
     uint32_t startMillis = hw.millis();
     while (hw.digitalRead(POWER_OFF_PIN) == BUTTON_PUSHED) {
         if (hw.millis() - startMillis > POWER_OFF_BUTTON_HOLD_MILLIS) {
@@ -553,15 +560,14 @@ void Main::callback()
 {
     if (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED && hw.digitalRead(FAN_UP_PIN) == BUTTON_PUSHED && hw.digitalRead(FAN_DOWN_PIN) == BUTTON_PUSHED) {
         // it's a user reset
-        hw.reset();
+        //hw.reset();
         // TEMP cause a watchdog timeout
-        //while (true) {
-        //    setLED(ERROR_LED_PIN, LED_ON);
-        //    setLED(ERROR_LED_PIN, LED_OFF);
-        //}
+        while (true) {
+            setLED(BATTERY_LED_LOW_PIN, LED_ON);
+            setLED(BATTERY_LED_LOW_PIN, LED_OFF);
+        }
     }
 }
-
 
 /********************************************************************
  * Startup and run
@@ -622,6 +628,19 @@ bool Main::setup()
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialBegin(true);
     serialPrintf("%s %s %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, __TIME__, resetFlags);
+    //serialPrintf(renderLongLong(NANO_AMPS_PER_CHARGE_FLOW_UNIT));
+    //serialPrintf(renderLongLong(NANO_VOLTS_PER_VOLTAGE_UNIT));
+    //serialPrintf(renderLongLong(RATED_BATTERY_CAPACITY_MAH));
+    //serialPrintf(renderLongLong(RATED_BATTERY_CAPACITY_PICO_COULOMBS));
+    serialPrintf(renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS));
+    serialPrintf(renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS_ALMOST));
+    //serialPrintf(renderLongLong(BATTERY_MIN_CHARGE_PICO_COULOMBS));
+    //serialPrintf(renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL));
+    //serialPrintf(renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE));
+    //serialPrintf(renderLongLong(MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS));
+    //serialPrintf(renderLongLong(MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS));
+    //serialPrintf(renderLongLong(BATTERY_FULLY_CHARGED_MICROVOLTS));
+
     if (shouldEnterTestMode()) {
         return true;
     }
@@ -658,7 +677,7 @@ bool Main::setup()
     // Enable the watchdog timer. (Note: Don't make the timeout value too small - we need to give the IDE a chance to
     // call the bootloader in case something dumb happens during development and the WDT
     // resets the MCU too quickly. Once the code is solid, you could make it shorter.)
-    wdt_enable(WDTO_8S);
+    wdt_enable(WATCHDOG_TIMEOUT);
 
     // Enable pin-change interrupts for the Power On button, and register a callback to handle those interrupts.
     // The interrupt serves 2 distinct purposes: (1) to get this callback called, and (2) to wake us up if we're napping.
@@ -696,6 +715,8 @@ void Main::doAllUpdates()
 }
 
 // This is our main function, which gets called over and over again, forever.
+// Measurements show that this function gets called approximately 500 to 1000
+// times per second; this of course might vary if you add/change/remove code.
 void Main::loop()
 {
     hw.wdt_reset_();
@@ -740,11 +761,13 @@ void Main::loop()
     }
 }
 
+extern uint32_t readMicroAmpsCounter;
+
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
     if (!serialActive()) return;
 
-    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,millis,%lu,micros,%lu",
+    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,count,%lu,millis,%lu,micros,%lu",
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
         (buzzerState == BUZZER_ON) ? "on" : "off",
         currentAlertName(),
@@ -761,7 +784,10 @@ void Main::onStatusReport() {
         (int32_t)(hw.readMicroAmps() / 1000LL),
         (int32_t)(battery.getPicoCoulombs() / 1000000000000LL),
         getBatteryPercentFull(),
+        readMicroAmpsCounter,
         hw.millis(),hw.micros());
+
+    readMicroAmpsCounter = 0;
 }
 
 Main* Main::instance;

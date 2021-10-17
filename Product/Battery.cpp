@@ -128,7 +128,7 @@ void Battery::updateBatteryTimers()
     bool isChargerConnectedNow = isChargerConnected();
     if (isChargerConnectedNow && !prevIsChargerConnected) {
         // the charger was just connected
-        //serialPrintln(F("charger connected"));
+        serialPrintln(F("charger connected"));
         chargeStartMilliSecs = hw.millis();
     }
     prevIsChargerConnected = isChargerConnectedNow;
@@ -142,7 +142,7 @@ void Battery::updateBatteryTimers()
 
     if (abs(microVolts - prevMicroVolts) >= BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD) {
         // voltage has changed since last time we checked
-        //serialPrintln(F("voltage changed"));
+        serialPrintln(F("voltage changed"));
         lastVoltageChangeMilliSecs = hw.millis();
         prevMicroVolts = microVolts;
     }
@@ -173,12 +173,12 @@ void Battery::update()
     int64_t deltaPicoCoulombs = chargeFlowMicroAmps * deltaMicroSecs;
 
     // update our counter of the battery charge. Don't let the number get out of range.
-    // We don't allow the counter to reach the full capacity here. It can only reach
-    // full if we pass the 5-point test below. This ensures that we don't prematurely
-    // assume the battery is full, which can happen if we over-estimated the fullness
-    // in estimatePicoCoulombsFromVoltage().
+// We don't allow the counter to reach the full capacity here. It can only reach
+// full if we pass the 5-point test below. This ensures that we don't prematurely
+// assume the battery is full, which can happen if we over-estimated the fullness
+// in estimatePicoCoulombsFromVoltage().
     picoCoulombs = picoCoulombs + deltaPicoCoulombs;
-    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS_ALMOST);
+    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
  
     // if the battery is charging, and has now reached the maximum charge,
     // we will set the battery coulomb counter to 100% of the battery capacity.
@@ -189,41 +189,64 @@ void Battery::update()
     // 4. the current flow rate is quite low
     uint32_t nowMillis = hw.millis();
     if ((picoCoulombs != BATTERY_CAPACITY_PICO_COULOMBS) &&
-        isChargerConnected() &&                                                              // ...the charger is attached, AND
+        isChargerConnected() &&                                                       // ...the charger is attached, AND
         ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS) &&       // ...we've been charging for a few minutes, AND
         ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS) && // ...the battery voltage hasn't changed for a few minutes, AND
-        (microVolts >= getFullyChargedMicrovolts()) &&                               // ...the battery voltage is what we expect for a full battery
-        (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL))                         // ...the current flow rate is quite low
+        (microVolts >= (getFullyChargedMicrovolts() * 0.95)) &&                                // ...the battery voltage is what we expect for a full battery
+        (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL))                          // ...the current flow rate is quite low
     {
         // Our 5-point check has passed. So we are probably finished charging. However,
         // because of random fluctuations in the current measurements, we might not be
         // *completely* finished. Let's see if we stay in the "charge finished" state
         // for a few seconds.
         if (maybeChargingFinished) {
-            //serialPrintln(F("maybeChargingFinished"));
             if (nowMillis - maybeChargingFinishedMilliSecs > 5000UL) {
                 // We've been in "charge finished" state for long enough. It's now safe
                 // to assume that the battery is fully charged.
                 picoCoulombs = BATTERY_CAPACITY_PICO_COULOMBS;
-                updateFullyChargedMicrovolts(microVolts);
+                maybeUpdateFullyChargedMicrovolts(microVolts);
                 maybeChargingFinished = false;
+                serialPrintln(F("finished charging"));
             }
         } else {
             maybeChargingFinished = true;
+            serialPrintln(F("maybeChargingFinished true"));
             maybeChargingFinishedMilliSecs = nowMillis;
         }
     } else {
-        maybeChargingFinished = false;
+        if (maybeChargingFinished) {
+            serialPrintf("%d %d %d %d %d %d",
+                (picoCoulombs != BATTERY_CAPACITY_PICO_COULOMBS),
+                isChargerConnected(),
+                ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
+                ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
+                (microVolts >= (getFullyChargedMicrovolts() * 0.95)),
+                (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL));
+            maybeChargingFinished = false;
+            serialPrintln(F("maybeChargingFinished false"));
+        }
     }
 }
 
+const uint16_t SAVED_MAX_VOLTAGE_ADDRESS = 8;
+
+static int64_t foo = 0;
+
 int64_t Battery::getFullyChargedMicrovolts() {
-    // if there is a saved value in nv ram, return that. Otherwise return our hard-coded estimte.
-    return BATTERY_FULLY_CHARGED_MICROVOLTS;
+    // if there is a saved value in nv ram, return that. Otherwise return our worst-case value
+    int64_t savedMicroVolts = hw.eepromReadInt64(SAVED_MAX_VOLTAGE_ADDRESS);
+    int64_t result = (savedMicroVolts != 0xffffffffffffffffLL) ? savedMicroVolts : (MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS * 0.95); // ADC accuracy is +/- 5%
+
+    if (foo != result) {
+        serialPrintf("getFullyChargedMicrovolts ", renderLongLong(result));
+        foo = result;
+    }
+
+    return result;
 }
 
-void Battery::updateFullyChargedMicrovolts(int64_t /*microVolts*/) {
-
+void Battery::maybeUpdateFullyChargedMicrovolts(int64_t microVolts) {
+    hw.eepromUpdateInt64(SAVED_MAX_VOLTAGE_ADDRESS, microVolts);
 }
 
 void Battery::DEBUG_incrementPicoCoulombs(int64_t increment)

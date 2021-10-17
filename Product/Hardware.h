@@ -121,17 +121,17 @@ const int64_t RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // Th
 const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs 
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;         // Battery capacity when it gets old. We use this to be safe.
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
-const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // 2,100 coulombs the minimum charge (the BMS shuts down the battery around this level)
-const int64_t CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL; // Cutoff current is calculated relative to battery capacity. C / 50 is often used.
-const int64_t CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;    // to allow for variations in the readings
+const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // the minimum charge (the BMS shuts down the battery around this level)
 
+// Cutoff current is calculated relative to battery capacity. C/35 is what we use here. C/50 is often used, maybe we should switch to that.
+const int64_t CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL;
+const int64_t CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;     // to allow for variations in the readings
 
 // When the battery is fully charged it will be at nominally 4.2V / cell or 25.2 volts for our 6 cells.
 // The tolerance range is 4.15 to 4.25 volts per cell, so minimum 24.9 volts.
 // The ADC isn't all that accurate, maybe +/-5% worst case, so we consider any voltage over 0.95 x 24.9 to be fully charged.
-const int64_t MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4150000LL;
+const int64_t MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4050000LL; // new ones range from 4.15-4.25, old batteries can drop as low as 4.05
 const int64_t MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS * 6LL;
-const int64_t BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS * 0.95;
 
 /*
 Here is a note from Brent Bolton about how AMPS_PER_CHARGE_FLOW_UNIT and VOLTS_PER_VOLTAGE_UNIT are determined:
@@ -205,6 +205,8 @@ public:
     inline void wdt_enable(const uint8_t value) { ::wdt_enable(value); }
     inline void wdt_disable() { ::wdt_disable(); }
     inline void wdt_reset_() { wdt_reset(); } // wdt_reset is a macro so we can't use "::"
+    void eepromUpdateInt64(uint16_t eeprom_address, int64_t data);
+    int64_t eepromReadInt64(uint16_t eeprom_address);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //

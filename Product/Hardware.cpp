@@ -4,6 +4,8 @@
 #include "Hardware.h"
 #include "PB2PWM.h"
 #include <avr/interrupt.h>
+#include "eeprom.h"
+#include "MySerial.h"
 
 Hardware::Hardware() :powerOnButtonInterruptCallback(0), fanRPMInterruptCallback(0), microAmps(0LL) { }
 
@@ -107,12 +109,15 @@ int64_t Hardware::readMicroVolts() {
     return ((int64_t)analogRead(BATTERY_VOLTAGE_PIN) * NANO_VOLTS_PER_VOLTAGE_UNIT) / 1000LL;
 }
 
+uint32_t readMicroAmpsCounter = 0;
+
 int64_t Hardware::readMicroAmps() {
+    readMicroAmpsCounter += 1;
     int32_t currentReading = analogRead(CHARGE_CURRENT_PIN);
     int32_t referenceReading = analogRead(REFERENCE_VOLTAGE_PIN);
     int64_t readingMicroAmps = (((int64_t)(referenceReading - currentReading)) * NANO_AMPS_PER_CHARGE_FLOW_UNIT) / 1000LL;
 
-    const int64_t lowPassFilterN = 10LL;
+    const int64_t lowPassFilterN = 500LL;
     microAmps = ((microAmps * lowPassFilterN) + readingMicroAmps) / (lowPassFilterN + 1LL);
     return microAmps;
 }
@@ -236,6 +241,22 @@ void Hardware::setBuzzer(int onOff, int32_t frequencyHz, int dutyCyclePercent) {
         stopPB2PWM();
     }
 }
+
+void Hardware::eepromUpdateInt64(uint16_t eeprom_address, int64_t value) {
+    int64_t currentValue = eepromReadInt64(eeprom_address);
+    if (currentValue != value) {
+        eeprom_write_block(&value, (void*)eeprom_address, sizeof(value));
+        serialPrintf("eeprom ", renderLongLong(value));
+    }
+}
+
+int64_t Hardware::eepromReadInt64(uint16_t eeprom_address) {
+    int64_t result;
+    eeprom_read_block(&result, (void*)eeprom_address, sizeof(result));
+    return result;
+}
+
+
 
 // This global function is used in a couple of places that don't have access to "Hardware.h" 
 uint32_t getMillis()

@@ -67,8 +67,9 @@ private:
     // Return the voltage that the battery will have when it is fully charged.
     static int64_t getFullyChargedMicrovolts();
 
-    // Update the saved value of the battery's fully-charged voltage.
-    static void updateFullyChargedMicrovolts(int64_t microVolts);
+    // Update the saved value of the battery's fully-charged voltage,
+    // if the provided value is greater than what's already saved.
+    static void maybeUpdateFullyChargedMicrovolts(int64_t microVolts);
 
     int64_t picoCoulombs; // How much charge is in the battery right now.
     int64_t microVolts;   // The voltage right now.
