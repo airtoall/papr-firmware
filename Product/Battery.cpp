@@ -233,7 +233,7 @@ void Battery::update()
                 picoCoulombs = BATTERY_CAPACITY_PICO_COULOMBS;
                 maybeUpdateFullyChargedMicrovolts(microVolts);
                 maybeChargingFinished = false;
-                serialPrintln(F("finished charging"));
+                //serialPrintln(F("finished charging"));
             }
         } else {
             maybeChargingFinished = true;

@@ -562,12 +562,12 @@ void Main::callback()
 {
     if (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED && hw.digitalRead(FAN_UP_PIN) == BUTTON_PUSHED && hw.digitalRead(FAN_DOWN_PIN) == BUTTON_PUSHED) {
         // it's a user reset
-        //hw.reset();
+        hw.reset();
         // TEMP cause a watchdog timeout
-        while (true) {
-            setLED(BATTERY_LED_LOW_PIN, LED_ON);
-            setLED(BATTERY_LED_LOW_PIN, LED_OFF);
-        }
+        //while (true) {
+        //    setLED(BATTERY_LED_LOW_PIN, LED_ON);
+        //    setLED(BATTERY_LED_LOW_PIN, LED_OFF);
+        //}
     }
 }
 
@@ -781,12 +781,12 @@ void Main::onStatusReport() {
         chargeReminder.isActive() ? "yes" : "no",
         CHARGER_STATUS_NAMES[battery.getChargerStatus()],
         (ledState[0] == LED_ON) ? "red" : "---",
-        (ledState[1] == LED_ON) ? "yellow" : "---",
-        (ledState[2] == LED_ON) ? "green" : "---",
-        (ledState[3] == LED_ON) ? "amber" : "---",
-        (ledState[4] == LED_ON) ? "blue" : "---",
-        (ledState[5] == LED_ON) ? "blue" : "---",
-        (ledState[6] == LED_ON) ? "blue" : "---",
+        (ledState[1] == LED_ON) ? "yellow" : "------",
+        (ledState[2] == LED_ON) ? "green" : "-----",
+        (ledState[3] == LED_ON) ? "amber" : "-----",
+        (ledState[4] == LED_ON) ? "blue" : "----",
+        (ledState[5] == LED_ON) ? "blue" : "----",
+        (ledState[6] == LED_ON) ? "blue" : "----",
         (int32_t)(hw.readMicroVolts() / 1000LL),
         (int32_t)(hw.readMicroAmps() / 1000LL),
         (int32_t)(battery.getPicoCoulombs() / 1000000000000LL),
