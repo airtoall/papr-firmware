@@ -156,7 +156,7 @@ void Battery::updateBatteryTimers()
 
     if (abs(microVolts - prevMicroVolts) >= BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD) {
         // voltage has changed since last time we checked
-        serialPrintln(F("voltage changed"));
+        //serialPrintln(F("voltage changed"));
         lastVoltageChangeMilliSecs = hw.millis();
         prevMicroVolts = microVolts;
     }
