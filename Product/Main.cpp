@@ -369,7 +369,7 @@ void Main::onChargeReminder() {
 }
 
 // This is the callback function for chargeReminderBeepTimer. This function gets called to turn off the chargeReminder buzzer and LED. 
-void Main::onChargeReminderTimer() {
+void Main::onChargeReminderBeepTimer() {
     setBuzzer(BUZZER_OFF);
     setLED(CHARGING_LED_PIN, LED_OFF);
 }
@@ -588,7 +588,7 @@ Main::Main() :
     alertTimer(
         []() { instance->onToggleAlert(); }),
     chargeReminderBeepTimer(
-        []() { instance->onChargeReminderTimer(); }),
+        []() { instance->onChargeReminderBeepTimer(); }),
     chargeReminder(
         []() { instance->onChargeReminder(); }),
     statusReport(
@@ -693,7 +693,7 @@ bool Main::setup()
     // and we're done!
     battery.initializeCoulombCount();
     enterState(initialState);
-    statusReport.start(5000UL);
+    statusReport.start(10000UL);
     return false;
 }
 

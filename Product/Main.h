@@ -61,7 +61,7 @@ private:
     void onToggleAlert();
     void onChargeReminder();
     void onStatusReport();
-    void onChargeReminderTimer();
+    void onChargeReminderBeepTimer();
     void onChargerLED();
     void raiseAlert(Alert alert);
     void setFanSpeed(FanSpeed speed);
