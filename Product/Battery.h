@@ -21,6 +21,8 @@ public:
     // The constructor. You only need one instance of this class.        
     Battery();
 
+    //void foo();
+
     // Is the charger currently connected?
     // CAUTION: this only means that the charger is connnected to our PCB. It does NOT
     // mean that the charger is plugged into the wall and receiving power.

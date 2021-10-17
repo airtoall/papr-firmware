@@ -109,7 +109,7 @@ private:
 
     // The timer that does the reminder beeps when the battery gets below 15%.
     PeriodicCallback chargeReminder;
-    OneTimeCallback chargeReminderTimer;
+    OneTimeCallback chargeReminderBeepTimer;
 
     /********************************************************************
      * Etc.
