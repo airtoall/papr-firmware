@@ -205,8 +205,7 @@ void Battery::update()
     // 4. the battery voltage is what we expect for a fully-charged battery, AND
     // 5. the charging current flow rate is quite low
     uint32_t nowMillis = hw.millis();
-    serialPrintToBuffer(batteryStatusString, sizeof(batteryStatusString), "%d %d %d %d %d %d %d",
-        (picoCoulombs != BATTERY_CAPACITY_PICO_COULOMBS),
+    serialPrintToBuffer(batteryStatusString, sizeof(batteryStatusString), "%d %d %d %d %d %d",
         isChargerConnected(),
         ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
         ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
