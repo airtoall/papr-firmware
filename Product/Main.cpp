@@ -43,10 +43,10 @@
 #define hw Hardware::instance
 
 // indexed by PAPRState
-const char* const STATE_NAMES[] = { "Off", "On", "Off Charging", "On Charging" };
+const char* const STATE_NAMES[] = { "Off", "On", "OffChg", "OnChg" };
 
 // indexed by ChargerStatus
-const char* const CHARGER_STATUS_NAMES[] = { "No", "Charging", "Full", "Error" };
+const char* const CHARGER_STATUS_NAMES[] = { "No", "Chg", "Full", "Error" };
 
 /********************************************************************
  * Fan constants
@@ -381,8 +381,8 @@ void Main::onChargeReminderBeepTimer() {
 // Go into a new state.
 void Main::enterState(PAPRState newState)
 {
-    serialPrintf("\r\nenter state %s", STATE_NAMES[newState]);
-    onStatusReport();
+    //serialPrintf("\r\nenter state %s", STATE_NAMES[newState]);
+    //onStatusReport();
 
     paprState = newState;
     switch (newState) {
@@ -768,13 +768,15 @@ void Main::loop()
     }
 }
 
-extern uint32_t readMicroAmpsCounter;
+//extern uint32_t readMicroAmpsCounter;
+extern char batteryStatusString[20];
 
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
     if (!serialActive()) return;
 
-    serialPrintf("Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,count,%lu,millis,%lu,micros,%lu",
+    serialPrintf("State,%s,Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,batt,%s",
+        STATE_NAMES[paprState],
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
         (buzzerState == BUZZER_ON) ? "on" : "off",
         currentAlertName(),
@@ -791,10 +793,12 @@ void Main::onStatusReport() {
         (int32_t)(hw.readMicroAmps() / 1000LL),
         (int32_t)(battery.getPicoCoulombs() / 1000000000000LL),
         getBatteryPercentFull(),
-        readMicroAmpsCounter,
-        hw.millis(),hw.micros());
+        &batteryStatusString
+        //hw.millis(), hw.micros(),
+        //readMicroAmpsCounter,
+    );
 
-    readMicroAmpsCounter = 0;
+    //readMicroAmpsCounter = 0;
 }
 
 Main* Main::instance;

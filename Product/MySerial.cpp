@@ -24,6 +24,14 @@ void serialPrintf(const char* __fmt, ...) {
 	nextBuffer = 0;
 }
 
+void serialPrintToBuffer(char* buffer, size_t bufferSize, const char* __fmt, ...) {
+	if (!_serialActive) return;
+	va_list args;
+	va_start(args, __fmt);
+	vsnprintf(buffer, bufferSize, __fmt, args);
+	va_end(args);
+}
+
 void serialPrint(const __FlashStringHelper* string) {
 	if (!_serialActive) return;
 	Serial.print(string);
