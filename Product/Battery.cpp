@@ -210,8 +210,7 @@ void Battery::update()
         ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
         ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
         (microVolts >= getFullyChargedMicrovolts()),
-        (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL),
-        maybeChargingFinished);
+        (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL));
 
     if (isChargerConnected() &&                                                       // See if the charger is attached, AND
         ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS) &&       // ...we've been charging for a few minutes, AND
