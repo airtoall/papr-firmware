@@ -350,7 +350,7 @@ void productionTestSetup() {
 	serialPrintln(F("6 - Battery Voltage test"));
 	serialPrintln(F("7 - Charger Detect test"));
 	serialPrintln(F("8 - Current Sensor test"));
-	serialPrintln(F("r - Reset"));
+	//serialPrintln(F("r - Reset"));
 }
 
 void productionTestLoop() {
