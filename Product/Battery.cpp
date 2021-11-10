@@ -44,23 +44,12 @@
 
 const uint16_t SAVED_MAX_VOLTAGE_ADDRESS = 8;
 
-///static int64_t foo = 0;
 char batteryStatusString[20];
 
 // Some parameters used by the coulomb counting algorithm.
 const uint32_t BATTERY_VOLTAGE_UPDATE_INTERVAL_MILLISECS = 500UL;
 const uint32_t CHARGER_WIND_DOWN_TIME_MILLIS = 1UL * 60UL * 1000UL;   // 1 minute in milliseconds
 const int64_t BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD = 100000LL;       // 0.1 volts
-
-//void Battery::foo() {
-//    serialPrintln(F("[[["));
-//    int64_t bar = getMinimumFullyChargedMicrovolts();
-//    maybeUpdateFullyChargedMicrovolts(bar - 1);
-//    maybeUpdateFullyChargedMicrovolts(bar + 1);
-//    maybeUpdateFullyChargedMicrovolts(bar + 1);
-//    getMinimumFullyChargedMicrovolts();
-//    serialPrintln(F("]]]"));
-//}
 
 // Whenever we wake up from sleeping, we have to re-inititialize all the data used for coulomb counting.
 // We don't coulomb count when the system is sleeping, because the amount of current flow is 
@@ -144,7 +133,9 @@ void Battery::updateBatteryTimers()
     bool isChargerConnectedNow = isChargerConnected();
     if (isChargerConnectedNow && !prevIsChargerConnected) {
         // the charger was just connected
+        #ifdef SERIAL_DEBUG
         serialPrintln(F("charger connected"));
+        #endif
         chargeStartMilliSecs = hw.millis();
     }
     prevIsChargerConnected = isChargerConnectedNow;
@@ -158,7 +149,6 @@ void Battery::updateBatteryTimers()
 
     if (abs(microVolts - prevMicroVolts) >= BATTERY_MICRO_VOLTS_CHANGED_THRESHOLD) {
         // voltage has changed since last time we checked
-        //serialPrintln(F("voltage changed"));
         lastVoltageChangeMilliSecs = hw.millis();
         prevMicroVolts = microVolts;
     }
@@ -189,10 +179,6 @@ void Battery::update()
     int64_t deltaPicoCoulombs = chargeFlowMicroAmps * deltaMicroSecs;
 
     // update our counter of the battery charge. Don't let the number get out of range.
-// xxx We don't allow the counter to reach the full capacity here. It can only reach
-// xxx full if we pass the 5-point test below. This ensures that we don't prematurely
-// xxx assume the battery is full, which can happen if we over-estimated the fullness
-// xxx in estimatePicoCoulombsFromVoltage().
     picoCoulombs = picoCoulombs + deltaPicoCoulombs;
     picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
  
@@ -202,15 +188,17 @@ void Battery::update()
     // 1. the charger is attached, AND
     // 2. we've been charging for at least a few minutes. AND
     // 3. the battery voltage hasn't changed for at least a few minutes, AND
-    // 4. the battery voltage is what we expect for a fully-charged battery, AND
+    // 4. the battery voltage is within the expected range for a fully-charged battery, AND
     // 5. the charging current flow rate is quite low
     uint32_t nowMillis = hw.millis();
-    serialPrintToBuffer(batteryStatusString, sizeof(batteryStatusString), "%d %d %d %d %d",
-        isChargerConnected(),
-        ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
-        ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
-        (microVolts >= getMinimumFullyChargedMicrovolts()),
-        (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL));
+    #ifdef SERIAL_DEBUG
+        serialPrintToBuffer(batteryStatusString, sizeof(batteryStatusString), "%d %d %d %d %d",
+            isChargerConnected(),
+            ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
+            ((nowMillis - lastVoltageChangeMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
+            (microVolts >= getMinimumFullyChargedMicrovolts()),
+            (chargeFlowMicroAmps < CHARGE_MICRO_AMPS_WHEN_FULL));
+    #endif
 
     if (isChargerConnected() &&                                                       // See if the charger is attached, AND
         ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS) &&       // ...we've been charging for a few minutes, AND
@@ -229,17 +217,14 @@ void Battery::update()
                 picoCoulombs = BATTERY_CAPACITY_PICO_COULOMBS;
                 maybeUpdateFullyChargedMicrovolts(microVolts);
                 maybeChargingFinished = false;
-                //serialPrintln(F("finished charging"));
             }
         } else {
             maybeChargingFinished = true;
-            //serialPrintln(F("maybeChargingFinished true"));
             maybeChargingFinishedMilliSecs = nowMillis;
         }
     } else {
         if (maybeChargingFinished) {
             maybeChargingFinished = false;
-            //serialPrintln(F("maybeChargingFinished false"));
         }
     }
 }
@@ -267,14 +252,18 @@ int64_t Battery::getMinimumFullyChargedMicrovolts() {
     }
 
     int64_t finalResult = result * (MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS / MAXIMUM_CELL_FULLY_CHARGED_MICROVOLTS);
+    #ifdef SERIAL_DEBUG
     if (result != foo) {
         serialPrintf("fullChargeMicroVolts %s %s %s", renderLongLong(savedMicroVolts), renderLongLong(result), renderLongLong(finalResult));
         foo = result;
     }
+    #endif
 
     return finalResult;
 }
 
+// Keep track of the highest voltage we've reached. This is a way to calibrate the ADC voltage readings, 
+// in order to reduce their inaccuracy.
 void Battery::maybeUpdateFullyChargedMicrovolts(int64_t microVolts) {
     int64_t savedMicroVolts = hw.eepromReadInt64(SAVED_MAX_VOLTAGE_ADDRESS);
     if (microVolts > savedMicroVolts) {
@@ -282,9 +271,9 @@ void Battery::maybeUpdateFullyChargedMicrovolts(int64_t microVolts) {
     }
 }
 
-void Battery::DEBUG_incrementPicoCoulombs(int64_t increment)
-{
-    picoCoulombs += increment;
-    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
-}
+//void Battery::DEBUG_incrementPicoCoulombs(int64_t increment)
+//{
+//    picoCoulombs += increment;
+//    picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
+//}
 

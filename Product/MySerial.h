@@ -10,3 +10,6 @@ void serialPrint(const __FlashStringHelper* string);
 void serialPrintln(const __FlashStringHelper* string);
 void serialPrintToBuffer(char* buffer, size_t bufferSize, const char* __fmt, ...);
 char* renderLongLong(int64_t num);
+
+
+#define SERIAL_DEBUG // define this symbol to enable debug output to the serial port

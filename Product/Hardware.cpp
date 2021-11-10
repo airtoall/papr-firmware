@@ -109,8 +109,6 @@ int64_t Hardware::readMicroVolts() {
     return ((int64_t)analogRead(BATTERY_VOLTAGE_PIN) * NANO_VOLTS_PER_VOLTAGE_UNIT) / 1000LL;
 }
 
-// uint32_t readMicroAmpsCounter = 0;
-
 int64_t Hardware::readMicroAmps() {
     // readMicroAmpsCounter += 1;
     int32_t currentReading = analogRead(CHARGE_CURRENT_PIN);
@@ -246,7 +244,9 @@ void Hardware::eepromUpdateInt64(uint16_t eeprom_address, int64_t value) {
     int64_t currentValue = eepromReadInt64(eeprom_address);
     if (currentValue != value) {
         eeprom_write_block(&value, (void*)eeprom_address, sizeof(value));
+        #ifdef SERIAL_DEBUG
         serialPrintf("write eeprom %s %s", renderLongLong(currentValue), renderLongLong(value));
+        #endif
     }
 }
 
