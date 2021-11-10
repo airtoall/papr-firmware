@@ -1,0 +1,68 @@
+
+PAPR Charging issues
+
+This document discusses several quirks in how the charging indicator LED works. None of these seems serious enough to fix, and it's best not to add more complexity if it isn't necessary.
+
+
+Mark
+
+1. You wrote "save battery voltage to a static variable when charging and the current drops below threshold. You'll still want to use a threshold a bit below the peak charge voltage. 4.05 V/cell is a pretty good number to allow for the battery getting weaker as it ages." Whenever certain conditions are true (such as charging current < 200mA, etc), I mark the battery full and save the voltage to NVRAM. If there is already a value saved in NVRAM I update it if the new value is higher. The NVRAM therefore represents the highest voltage ever observed. Whenever all the battery-full conditions are true, I consider the battery fully-charged, but only if the voltage reading is >= the NVRAM value * 0.95. I calculated the factor 0.95 = 4.05 / 4.25, because 4.25 is the highest possible valid voltage, and 4.05 is the lowest possible valid voltage. Question: is this the right calculation?
+
+2. There is an anomoly in the coulomb counting algorithm that I don't think can be fixed, but I think is tolerable. The anomaly occurs when (a) the charger is connected to the PAPR unit but NOT to the 110V wall supply, and (b) the battery voltage is >= NVRAM-value * 0.95. (FWIW this voltage will occur when the battery is anywhere above roughly 85% percent full). Under these conditions, the charging LED *should* be quickly flashing to signal an error, but the LED will in fact will be solid ON, because we think the battery is full because it meets all of the battery-full conditions. My coulomb counter will say "full" even thought the battery is only 85% full. I think this is OK because (1) it's the user's fault for not plugging the thing into the wall (2) I never set coulomb counter higher than 90% of the rated capacity (0.9 * 7000 mAh = 6300) to allow for battery aging; this gives a margin of safety (3) there are several levels of warning before the battery runs out (4) the anomoly goes away as soon as the charger is plugged in (5) if you power on the papr and run it for a while, the voltage will eventually drop below NVRAM * 0.95 and the LED will properly start quick flashing. Question: do you agree that this is good enough?
+
+---
+Brent
+
+For 1, I would suggest saving either the most recent value to NVRAM or a rolling average of the N most recent values. You want accurate data on the recent state of the battery rather than the maximum historical value.
+
+I agree that 2 is probably OK. Though if you know that your Coulomb count is accurate, i. e. a recent charge met the termination criteria with the charger plugged in, you could use that additional data to know that the battery is not actually at full charge.
+
+---
+Mark
+
+Concerning #1 -  you suggest that the NVRAM value should reflect the recent state of the battery. But here's the problem...Anomaly #2 can trick us into thinking the battery is full. If this happens, we would write an erroneously low value to the NVRAM. This is why I only write to the NVRAM if the new value is higher than what's already in NVRAM. I was assuming that the formula [NVRAM value *(4.05/4.25)] would give the lowest possible legal value, even if the battery is old. I am assuming that the purpose of the NVRAM is to compensate for the +/- 5% variation in the current sensor.
+
+---
+Brent
+
+One question: When charging, are you counting charge Coulombs? This should always tell you approximately where the battery is at. All the other end of charge indications can then be used to ground truth the Coulomb count so that it doesn't get way off over multiple charge/discharge cycles.
+
+---
+Mark 
+
+Yes indeed the code counts coulombs, and uses the end-of-charge indicators to Keep the count honest.
+
+The problem is that the end-of-charge indications sometimes lie.
+
+---
+Brent
+
+If you've reset the Coulomb count using the end of charge indications within some number of charge cycles (maybe 10 or so) and it disagrees with the end of charge indicators, go with the Coulomb count to keep the end of charge indicators honest.
+
+---
+Mark
+
+3. Under these conditions:
+
+    the charger is connected to the PAPR and also to a 110V supply
+    rhe battery is almost full
+    the fan is at high speed
+
+we will reach a point where the charging indicator shows Battery Full. If you then reduce the fan speed, the charging indicator might change to Battery Charging. And if you go back to high fan speed, the indicator will say Battery Full again. The reason is that the fan steals some of the charging current. When the fan is high, it steals a lot of current, and so the charging current is lower than our threshold (~200mA) and we deduce that the battery is full. When the fan speed is lowered, less current gets stolen, and so the charging current becomes higher than the threshold and we deduce the battery is charging. I don't think this is a serious problem, and I don't think it is easily fixable, so I propose to do nothing about it. What do you think?
+
+---
+Brent
+
+I agree.
+
+===========
+Ideas to fix anomaly #2:
+- only consider the device is charging if the voltage is increasing? (or non-decreasing)
+- have lower limit on charging current, i.e. if current is < -100 then we don't consider it charge complete
+
+
+
+
+
+
+
