@@ -128,9 +128,12 @@ const int64_t CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL 
 const int64_t CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;     // to allow for variations in the readings
 
 // When the battery is fully charged it will be at nominally 4.2V / cell or 25.2 volts for our 6 cells.
-// The tolerance range is 4.15 to 4.25 volts per cell, so minimum 24.9 volts.
-// The ADC isn't all that accurate, maybe +/-5% worst case, so we consider any voltage over 0.95 x 24.9 to be fully charged.
-const int64_t MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4050000LL; // new ones range from 4.15-4.25, old batteries can drop as low as 4.05
+// The tolerance range is 4.15 to 4.25 volts per cell when new, and can be as low as 4.05 when old, 
+// so the voltage of a fully charged battery can be as low as 6 x 4.05 = 24.3 volts.
+// The ADC isn't all that accurate, maybe +/-5% worst case, so the voltage reading
+// of a fully charged battery can be as low as 0.95 x 24.3 = 23.1 volts.
+const int64_t MAXIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4250000LL; 
+const int64_t MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS = 4050000LL; 
 const int64_t MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS = MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS * 6LL;
 
 /*

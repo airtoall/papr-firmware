@@ -5,3 +5,4 @@ Debug
 Release
 __vm/
 n.~lock.*
+.DS_Store
