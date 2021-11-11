@@ -733,9 +733,9 @@ extern char batteryStatusString[20];
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
     #ifdef SERIAL_DEBUG
-    serialPrintf("State,%s,Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,batt,%s",
+    serialPrintf("State,%s,Fan,%s,%u,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,batt,%s",
         STATE_NAMES[paprState],
-        (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
+        (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"), fanController.getRPM(),
         (buzzerState == BUZZER_ON) ? "on" : "off",
         currentAlertName(),
         chargeReminder.isActive() ? "yes" : "no",
