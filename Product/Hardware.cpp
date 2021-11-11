@@ -110,7 +110,6 @@ int64_t Hardware::readMicroVolts() {
 }
 
 int64_t Hardware::readMicroAmps() {
-    // readMicroAmpsCounter += 1;
     int32_t currentReading = analogRead(CHARGE_CURRENT_PIN);
     int32_t referenceReading = analogRead(REFERENCE_VOLTAGE_PIN);
     int64_t readingMicroAmps = (((int64_t)(referenceReading - currentReading)) * NANO_AMPS_PER_CHARGE_FLOW_UNIT) / 1000LL;

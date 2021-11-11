@@ -49,7 +49,7 @@ public:
 
     // For testing and debugging: change the current coulomb count, to fool the system into
     // thinking the battery is more (or less) charged that it really is.
-    void DEBUG_incrementPicoCoulombs(int64_t increment);
+    // void DEBUG_incrementPicoCoulombs(int64_t increment);
 
     // When the system is starting up, call this function.
     void initializeCoulombCount();
