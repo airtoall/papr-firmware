@@ -24,5 +24,5 @@ private:
 	uint32_t _lastMillis;
 
 public:
-	virtual void callback();
+	virtual void interruptCallback();
 };

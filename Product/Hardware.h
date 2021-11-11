@@ -183,7 +183,7 @@ Current_in_mA = (ADC6 - PC1) * 6.516780710329097
 // If you have code that wants to receive interrupts, your code must be a subclass of InterruptCallback.
 class InterruptCallback {
 public:
-    virtual void callback() = 0;
+    virtual void interruptCallback() = 0;
 };
 
 // This singleton class provides hardware-specific functions.

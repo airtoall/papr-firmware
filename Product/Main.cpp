@@ -34,7 +34,7 @@
 #include "Hardware.h"
 #include "MiscConstants.h"
 
-#define WATCHDOG_TIMEOUT WDTO_4S
+#define WATCHDOG_TIMEOUT WDTO_2S
 
  // The Hardware object gives access to all the microcontroller hardware such as pins and timers. Please always use this object,
  // and never access any hardware or Arduino APIs directly. This gives us the option of using a fake hardware object for unit testing.
@@ -535,7 +535,7 @@ void Main::onFanUpPress()
 }
 
 // This function is an interrupt handler that gets called whenever the user presses the Power On button.
-void Main::callback()
+void Main::interruptCallback()
 {
     if (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED && hw.digitalRead(FAN_UP_PIN) == BUTTON_PUSHED && hw.digitalRead(FAN_DOWN_PIN) == BUTTON_PUSHED) {
         // it's a user reset

@@ -135,5 +135,5 @@ private:
 public:
     // Glue
     static Main* instance;   // the one and only instance of Main.
-    virtual void callback(); // handler for Power On button pin-change interrupts
+    virtual void interruptCallback(); // handler for Power On button pin-change interrupts
 };

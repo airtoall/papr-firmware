@@ -53,7 +53,7 @@ void FanController::_detachInterrupt() {
 }
 
 // This function gets called each time there is a pin change interrupt on the RPM sensor pin
-void FanController::callback() {
+void FanController::interruptCallback() {
 	if (hw.digitalRead(_sensorPin) == LOW) {
 		_halfRevs++;
 	}

@@ -133,7 +133,7 @@ void Hardware::handleInterrupt() {
         uint16_t newPowerOnButtonState = digitalRead(POWER_ON_PIN);
         if (newPowerOnButtonState != powerOnButtonState) {
             powerOnButtonState = newPowerOnButtonState;
-            powerOnButtonInterruptCallback->callback();
+            powerOnButtonInterruptCallback->interruptCallback();
         }
     }
 
@@ -143,7 +143,7 @@ void Hardware::handleInterrupt() {
         uint16_t newFanRPMState = digitalRead(FAN_RPM_PIN);
         if (newFanRPMState != fanRPMState) {
             fanRPMState = newFanRPMState;
-            fanRPMInterruptCallback->callback();
+            fanRPMInterruptCallback->interruptCallback();
         }
     }
 }
@@ -180,15 +180,15 @@ void Hardware::updateInterruptHandling() {
     }
 }
 
-void Hardware::setPowerOnButtonInterruptCallback(InterruptCallback* callback)
+void Hardware::setPowerOnButtonInterruptCallback(InterruptCallback* interruptCallback)
 {
-    powerOnButtonInterruptCallback = callback;
+    powerOnButtonInterruptCallback = interruptCallback;
     updateInterruptHandling();
 }
 
-void Hardware::setFanRPMInterruptCallback(InterruptCallback* callback)
+void Hardware::setFanRPMInterruptCallback(InterruptCallback* interruptCallback)
 {
-    fanRPMInterruptCallback = callback;
+    fanRPMInterruptCallback = interruptCallback;
     updateInterruptHandling();
 }
 
