@@ -63,9 +63,6 @@ void serialEnd() {
 	Serial.end();
 }
 
-bool serialActive() {
-	return _serialActive;
-}
 char* renderLongLong(int64_t num) {
 	// doesn't work for LLONG_MAX + 1, a.k.a. -LLONG_MAX - 1
 

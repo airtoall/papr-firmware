@@ -34,8 +34,6 @@
 #include "Hardware.h"
 #include "MiscConstants.h"
 
-#define SERIAL_DEBUG // define this symbol to enable debug output to the serial port
-
 #define WATCHDOG_TIMEOUT WDTO_4S
 
  // The Hardware object gives access to all the microcontroller hardware such as pins and timers. Please always use this object,
@@ -119,6 +117,7 @@ const uint32_t* const alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis };
 // generous margin, it's actually about an hour.
 const int URGENT_BATTERY_PERCENT = 8;
 
+// How often does the charge reminder beep.
 const uint32_t CHARGE_REMINDER_INTERVAL_MILLIS = 30000UL;
 
 /********************************************************************
@@ -136,13 +135,6 @@ void Main::setLED(const int pin, int onOff) {
             return;
         }
     }
-}
-
-// TEMP - FOR DEBUGGING
-void flashLED(const int pin, const uint16_t millis) {
-    hw.digitalWrite(pin, LED_ON);
-    if (millis) hw.delay(millis);
-    hw.digitalWrite(pin, LED_OFF);
 }
 
 // Turn off all LEDs
@@ -200,7 +192,6 @@ void Main::onToggleAlert()
 void Main::raiseAlert(Alert alert)
 {
     currentAlert = alert;
-    //serialPrintf("Begin %s Alert", currentAlertName());
     currentAlertLEDs = alertLEDs[alert];
     currentAlertMillis = alertMillis[alert];
     alertToggle = false;
@@ -241,7 +232,6 @@ void Main::setFanSpeed(FanSpeed speed)
     fanController.setDutyCycle(fanDutyCycles[speed]);
     currentFanSpeed = speed;
     updateFanLEDs();
-    //Printf("Set Fan Speed %d", speed);
 
     // disable fan RPM monitor for a few seconds, until the new fan speed stabilizes
     lastFanSpeedChangeMilliSeconds = hw.millis();
@@ -282,8 +272,6 @@ void Main::updateChargerLED() {
 
     chargerLEDFlasher.stop();
 
-    //serialPrintf("charger status %d", (int)status);
-
     switch (status) {
     case chargerNotConnected:
         setLED(CHARGING_LED_PIN, LED_OFF);
@@ -309,14 +297,6 @@ void Main::updateChargerLED() {
 // Call this periodically to update the battery and charging LEDs.
 void Main::updateBatteryLEDs() {
     int percentFull = getBatteryPercentFull();
-
-    // Decide if the red LED should be on or not.
-    //bool redLED = (percentFull < 40);
-    //if (percentFull <= URGENT_BATTERY_PERCENT && !battery.isChargerConnected()) {
-    //    // The battery level is really low. Flash the LED.
-    //    bool ledToggle = (hw.millis() / 1000UL) & 1;
-    //    redLED = redLED && ledToggle;
-    //}
 
     // Turn on/off the battery LEDs as required
     setLED(BATTERY_LED_LOW_PIN, (percentFull < 40) ? LED_ON : LED_OFF); // red
@@ -381,9 +361,6 @@ void Main::onChargeReminderBeepTimer() {
 // Go into a new state.
 void Main::enterState(PAPRState newState)
 {
-    //serialPrintf("\r\nenter state %s", STATE_NAMES[newState]);
-    //onStatusReport();
-
     paprState = newState;
     switch (newState) {
         case stateOn:
@@ -630,18 +607,6 @@ bool Main::setup()
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialBegin(true);
     serialPrintf("%s %s %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, __TIME__, resetFlags);
-    //serialPrintf(renderLongLong(NANO_AMPS_PER_CHARGE_FLOW_UNIT));
-    //serialPrintf(renderLongLong(NANO_VOLTS_PER_VOLTAGE_UNIT));
-    //serialPrintf(renderLongLong(RATED_BATTERY_CAPACITY_MAH));
-    //serialPrintf(renderLongLong(RATED_BATTERY_CAPACITY_PICO_COULOMBS));
-    //serialPrintf(renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS));
-    //serialPrintf(renderLongLong(BATTERY_CAPACITY_PICO_COULOMBS_ALMOST));
-    //serialPrintf(renderLongLong(BATTERY_MIN_CHARGE_PICO_COULOMBS));
-    //serialPrintf(renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL));
-    //serialPrintf(renderLongLong(CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE));
-    //serialPrintf(renderLongLong(MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS));
-    //serialPrintf(renderLongLong(MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS));
-    //serialPrintf(renderLongLong(BATTERY_FULLY_CHARGED_MICROVOLTS));
 
     if (shouldEnterTestMode()) {
         return true;
@@ -684,11 +649,6 @@ bool Main::setup()
     // Enable pin-change interrupts for the Power On button, and register a callback to handle those interrupts.
     // The interrupt serves 2 distinct purposes: (1) to get this callback called, and (2) to wake us up if we're napping.
     hw.setPowerOnButtonInterruptCallback(this);
-
-    //battery.foo();
-    //battery.foo();
-    //battery.foo();
-    //battery.foo();
 
     // and we're done!
     battery.initializeCoulombCount();
@@ -768,13 +728,11 @@ void Main::loop()
     }
 }
 
-//extern uint32_t readMicroAmpsCounter;
 extern char batteryStatusString[20];
 
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
-    if (!serialActive()) return;
-
+    #ifdef SERIAL_DEBUG
     serialPrintf("State,%s,Fan,%s,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,batt,%s",
         STATE_NAMES[paprState],
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"),
@@ -793,12 +751,8 @@ void Main::onStatusReport() {
         (int32_t)(hw.readMicroAmps() / 1000LL),
         (int32_t)(battery.getPicoCoulombs() / 1000000000000LL),
         getBatteryPercentFull(),
-        &batteryStatusString
-        //hw.millis(), hw.micros(),
-        //readMicroAmpsCounter,
-    );
-
-    //readMicroAmpsCounter = 0;
+        &batteryStatusString);
+    #endif
 }
 
 Main* Main::instance;

@@ -49,7 +49,7 @@ public:
 
     // For testing and debugging: change the current coulomb count, to fool the system into
     // thinking the battery is more (or less) charged that it really is.
-    void DEBUG_incrementPicoCoulombs(int64_t increment);
+    // void DEBUG_incrementPicoCoulombs(int64_t increment);
 
     // When the system is starting up, call this function.
     void initializeCoulombCount();
@@ -66,8 +66,8 @@ private:
     // at which time we know how much charge it has.
     static int64_t estimatePicoCoulombsFromVoltage(int64_t microVolts);
 
-    // Return the voltage that the battery will have when it is fully charged.
-    static int64_t getFullyChargedMicrovolts();
+    // Return the minimum voltage that the battery can have when it is fully charged.
+    static int64_t getMinimumFullyChargedMicrovolts();
 
     // Update the saved value of the battery's fully-charged voltage,
     // if the provided value is greater than what's already saved.

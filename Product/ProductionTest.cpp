@@ -366,7 +366,7 @@ void productionTestLoop() {
 		case '6': testBatteryVoltage(); break;
 		case '7': testChargerDetect(); break;
 		case '8': testCurrentSensor(); break;
-		case 'r': hw.reset(); break;
+		//case 'r': hw.reset(); break;
 		default: serialPrintf("Unknown command '%c'", command); break;
 	}
 }
