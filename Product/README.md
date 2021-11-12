@@ -115,19 +115,25 @@ Debugger: I have not succeeded in using a debugger on the PAPR. If you figure ou
 
 ### Development practices
 
-I am not going to write a list of best practices for coding because there are a million web sites that talk about this (for example [this one](https://www.thinkful.com/blog/software-engineering-best-practices/)). The PAPR is a medical device and we need the code to be professional, high-quality, maintainable, and reliable. Please follow the naming, formatting, and commenting practices that you see in the code. Make sure your code is as clean and simple as possible. Make sure that other developers will be able to read and understand your code. Make sure you test your code thoroughly - once the product is delivered to the customer it is extremely difficult to fix bugs or update the code. If you find errors or omissions in this Readme, please update it to make life easier for the next developer. If you add new features or change the behavior in any way, make sure to update, where applicable, the Specification, the Verification test suite (see links below), this readme file, and/or the comments in the code.
+I haven't included any best practices guidelines for coding because there are a million web sites that talk about this (for example [this one](https://www.thinkful.com/blog/software-engineering-best-practices/)). The PAPR is a medical device and we need the code to be professional, high-quality, maintainable, and reliable. Please follow the naming, formatting, and commenting practices that you see in the code. Make sure your code is as clean and simple as possible. Make sure that other developers will be able to read and understand your code. Make sure you test your code thoroughly - once the product is delivered to the customer it is extremely difficult to fix bugs or update the code. Run the full [Functional Core Verification Test Suite](https://docs.google.com/document/d/1ubjNnj6kYDCdJMwp07bt-jukzoTlcU7nhaN4yKzK2nk/) at least once before shipping a new release. If you find errors or omissions in this Readme, please update it to make life easier for the next developer. If you add new features or change the behavior in any way, make sure to update, where applicable, the Specification, the Verification test suite (see links below), this readme file, and/or the comments in the code.
 
-### Related documents
+### Primary documents
+
+These are the "official" documents describing the functionality of the PAPR product firmware, how to use it, how to test it.
 
 [Functional Core Specification](https://docs.google.com/document/d/1O3QTVKkepRBzme7QUEG_r9uPpGkaOA27uIlCKO2OQU8/edit) - detailed description of everything the firmware does. 
 
-[Functional Core Verification Test Suite](https://docs.google.com/document/d/1ubjNnj6kYDCdJMwp07bt-jukzoTlcU7nhaN4yKzK2nk/edit) - a detailed set of tests that fully exercise the firmware. You MUST run this entire suite before shipping a new version of the firmware.
+[Functional Core Verification Test Suite](https://docs.google.com/document/d/1ubjNnj6kYDCdJMwp07bt-jukzoTlcU7nhaN4yKzK2nk/edit) - a detailed set of tests that fully exercise the firmware. Run this entire suite before shipping a new version of the firmware.
 
-[PAPR battery discharge 6-4-21](https://docs.google.com/spreadsheets/d/14-mchRN22HC6OSyAcN329NEcRRjF2_VMbKz3yHDDEoI/edit#gid=1527307635) - measurements of battery voltage and current when the battery is being discharged. This information helps understand the behavior of the battery, and is the basis for some of the magic constants that appear in the firmware.
+[PCB Production Tests](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/Production%20Test.pdf] - A suite of tests to be performed on the PAPR PCB after a PCB is assembled but before conformal coating and installation into a fully assembled PAPR unit. The tests are provided by the firmware's Test mode, 
 
-[PAPR battery charge 6-5-21](https://docs.google.com/spreadsheets/d/1fPnn2ukakk8MpyGW_KrOW2ediHh8FU6yWr4Kfq2UNJs/edit#gid=13224763) - ditto for battery charging.
+[PCB Validation Test Suite](https://docs.google.com/document/d/1M6ftVc30-DXrsPZTG73OsVQJnZh4xsFBa8cYp-f8Py0/) A test suite to be performed by factory personnel on every newly-manufactured PAPR, to confirm that the PCB is fully working and the peripheral devices (fan, battery, charger, buzzer, buttons, lighs) are properly connected. The tests use various features of the product firmware.
 
-[PCB Schematic](https://drive.google.com/file/d/1MSYiGF72mZZyR-azV0Dmqaq_ivXD0C3Q/view?usp=sharing) - The schematic for the PCB. THIS IS THE V3.0 SCHEMATIC. ASK BRENT BOLTON FOR THE UPDATED V3.1 SCHEMATIC.
+### Reference Documents
+
+Here are documents for other system components that the firmware innteracts with.
+
+[PCB Schematic](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/PAPR%20schematic%20v3.1.pdf) - The latest schematic for the PCB.
 
 [ATMega328p Info](https://www.microchip.com/wwwproducts/en/ATmega328P) - Info on the ATMega328p MCU
 
@@ -135,7 +141,15 @@ I am not going to write a list of best practices for coding because there are a 
 
 [Buzzer Info][???) - Info on the XXXX buzzer. (TBD)
 
-The Product/Docs folder of this repo contains a few miscellaneous documents.
+[PAPR battery discharge 6-4-21](https://docs.google.com/spreadsheets/d/14-mchRN22HC6OSyAcN329NEcRRjF2_VMbKz3yHDDEoI/edit#gid=1527307635) - measurements of battery voltage and current when the battery is being discharged. This information helps understand the behavior of the battery, and is the basis for some of the magic constants that appear in the firmware.
+
+[PAPR battery charge 6-5-21](https://docs.google.com/spreadsheets/d/1fPnn2ukakk8MpyGW_KrOW2ediHh8FU6yWr4Kfq2UNJs/edit#gid=13224763) - ditto for battery charging.
+
+### Other Documents
+
+You can find additional miscellanous documents (notes, experiments, measurement) [https://github.com/airtoall/papr-firmware/tree/master/Product/Docs](here) and [https://drive.google.com/drive/folders/1pIbtwiE1PP5SLPMRfh0A3RLS38V0ZmLC](here). Caveat: some of the documents may be out of date.
+
+
 
 
 
