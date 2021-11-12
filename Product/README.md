@@ -123,31 +123,33 @@ These are the "official" documents describing the functionality of the PAPR prod
 
 [Functional Core Specification](https://docs.google.com/document/d/1O3QTVKkepRBzme7QUEG_r9uPpGkaOA27uIlCKO2OQU8/edit) - detailed description of everything the firmware does. 
 
-[Functional Core Verification Test Suite](https://docs.google.com/document/d/1ubjNnj6kYDCdJMwp07bt-jukzoTlcU7nhaN4yKzK2nk/edit) - a detailed set of tests that fully exercise the firmware. Run this entire suite before shipping a new version of the firmware.
+[Functional Core Verification Test Suite](https://docs.google.com/document/d/1ubjNnj6kYDCdJMwp07bt-jukzoTlcU7nhaN4yKzK2nk/edit) - detailed set of tests that fully exercise the firmware. Run this entire suite before shipping a new version of the firmware.    
 
-[PCB Production Tests](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/Production%20Test.pdf] - A suite of tests to be performed on the PAPR PCB after a PCB is assembled but before conformal coating and installation into a fully assembled PAPR unit. The tests are provided by the firmware's Test mode, 
+[PCB Production Tests](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/Production%20Test.pdf) - suite of tests to be performed on the PAPR PCB after a PCB is assembled but before conformal coating and installation into a fully assembled PAPR unit. The tests are provided by the firmware's Test mode, 
 
-[PCB Validation Test Suite](https://docs.google.com/document/d/1M6ftVc30-DXrsPZTG73OsVQJnZh4xsFBa8cYp-f8Py0/) A test suite to be performed by factory personnel on every newly-manufactured PAPR, to confirm that the PCB is fully working and the peripheral devices (fan, battery, charger, buzzer, buttons, lighs) are properly connected. The tests use various features of the product firmware.
+[PCB Validation Test Suite](https://docs.google.com/document/d/1M6ftVc30-DXrsPZTG73OsVQJnZh4xsFBa8cYp-f8Py0/) - test suite to be performed by factory personnel on every newly-manufactured PAPR, to confirm that the PCB is fully working and the peripheral devices (fan, battery, charger, buzzer, buttons, lighs) are properly connected. The tests use various features of the product firmware.
 
 ### Reference Documents
 
-Here are documents for other system components that the firmware innteracts with.
+Here are documents for various system components that the firmware innteracts with.
 
-[PCB Schematic](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/PAPR%20schematic%20v3.1.pdf) - The latest schematic for the PCB.
+[PCB Schematic](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/PAPR%20schematic%20v3.1.pdf)
 
-[ATMega328p Info](https://www.microchip.com/wwwproducts/en/ATmega328P) - Info on the ATMega328p MCU
+[ATMega328p MCU](https://www.microchip.com/wwwproducts/en/ATmega328P)
 
-[Fan Info](https://www.digikey.com/en/products/detail/sanyo-denki-america-inc/9GA0412P3K011/6192261) - Info on the 9GA0412P3K011 fan
+[Fan](https://www.digikey.com/en/products/detail/sanyo-denki-america-inc/9GA0412P3K011/6192261)
 
-[Buzzer Info][???) - Info on the XXXX buzzer. (TBD)
+[Buzzer](https://www.mouser.com/ProductDetail/pui-audio/ai-4228-tf-lw140-r/?qs=SBRiUyCkHOa4tqLew7wVrQ%3D%3D&countrycode=US&currencycode=USD)
+
+[Charger](https://docs.google.com/document/d/1e4-3FsUqVByBeWgNZhnA9pTo6GLNH1A_LT6psdZWTmo/edit?usp=sharing)
 
 [PAPR battery discharge 6-4-21](https://docs.google.com/spreadsheets/d/14-mchRN22HC6OSyAcN329NEcRRjF2_VMbKz3yHDDEoI/edit#gid=1527307635) - measurements of battery voltage and current when the battery is being discharged. This information helps understand the behavior of the battery, and is the basis for some of the magic constants that appear in the firmware.
 
-[PAPR battery charge 6-5-21](https://docs.google.com/spreadsheets/d/1fPnn2ukakk8MpyGW_KrOW2ediHh8FU6yWr4Kfq2UNJs/edit#gid=13224763) - ditto for battery charging.
+[PAPR battery charge 6-5-21](https://docs.google.com/spreadsheets/cd/1fPnn2ukakk8MpyGW_KrOW2ediHh8FU6yWr4Kfq2UNJs/edit#gid=13224763) - ditto for battery charging.
 
 ### Other Documents
 
-You can find additional miscellanous documents (notes, experiments, measurement) [https://github.com/airtoall/papr-firmware/tree/master/Product/Docs](here) and [https://drive.google.com/drive/folders/1pIbtwiE1PP5SLPMRfh0A3RLS38V0ZmLC](here). Caveat: some of the documents may be out of date.
+Additional miscellanous documents relating to this firmware, such as notes, experiments, measurements, old specs, can be found [here](https://github.com/airtoall/papr-firmware/tree/master/Product/Docs) and [here](https://drive.google.com/drive/folders/1pIbtwiE1PP5SLPMRfh0A3RLS38V0ZmLC). Caveat: some of the documents are out of date.
 
 
 
