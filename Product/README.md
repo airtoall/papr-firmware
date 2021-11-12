@@ -103,7 +103,7 @@ In the firmware, use MySerial.h and MySerial.cpp to write to the serial port. If
 
 ### Code notes
 
-Structure of the app: the firmware begins in Product.ino, which contains the standard Arduino entry points setup() and loop(). Those entry points delegate to either Main, for normal product operation, or ProductionTest, for Test Mode. Those modules use Battery, FanController, Hardware, and MySerial to access the hardware and peripherals, and they in turn use various utility modules PeriodCallback, OneTimeCallback, and PressDetector.
+Structure of the app: the firmware begins in Product.ino, which contains the standard Arduino entry points setup() and loop(). Those entry points delegate to either Main, for normal product operation, or ProductionTest, for Test Mode. Those modules use Battery, FanController, Hardware, and MySerial to access the hardware and peripherals, as well as various utility modules PeriodCallback, OneTimeCallback, and PressDetector.
 
 This project uses the Arduino library "Low-Power 1.6". To ensure repeatable builds, we keep a copy of this library in the visual studio project, in the "Libraries" folder. (FYI, in Visual Micro, you can add more libraries `Extensions > vMicro > Add Library` with the *Clone For Solution* option).
 
