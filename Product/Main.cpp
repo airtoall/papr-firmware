@@ -287,7 +287,7 @@ void Main::updateChargerLED() {
     case chargerError:
         chargerLEDToggle = false;
         onChargerLED();
-        chargerLEDFlasher.start(100L);
+        chargerLEDFlasher.start(200L);
         break;
     }
 
