@@ -101,7 +101,9 @@ The serial port pins PD0 and PD1 are exposed via the PCB's serial header. To acc
 
 In the firmware, use MySerial.h and MySerial.cpp to write to the serial port. If you prefer, you can use Arduino's `Serial` API directly.
 
-### Misc notes
+### Code notes
+
+Structure of the app: the firmware begins in Product.ino, which contains the standard Arduino entry points setup() and loop(). Those entry points delegate to either Main, for normal product operation, or ProductionTest, for Test Mode. Those modules use Battery, FanController, Hardware, and MySerial to access the hardware and peripherals, and they in turn use various utility modules PeriodCallback, OneTimeCallback, and PressDetector.
 
 This project uses the Arduino library "Low-Power 1.6". To ensure repeatable builds, we keep a copy of this library in the visual studio project, in the "Libraries" folder. (FYI, in Visual Micro, you can add more libraries `Extensions > vMicro > Add Library` with the *Clone For Solution* option).
 
@@ -125,7 +127,7 @@ These are the "official" documents describing the functionality of the PAPR prod
 
 [Functional Core Verification Test Suite](https://docs.google.com/document/d/1ubjNnj6kYDCdJMwp07bt-jukzoTlcU7nhaN4yKzK2nk/edit) - detailed set of tests that fully exercise the firmware. Run this entire suite before shipping a new version of the firmware.    
 
-[PCB Production Tests](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/Production%20Test.pdf) - suite of tests to be performed on the PAPR PCB after a PCB is assembled but before conformal coating and installation into a fully assembled PAPR unit. The tests are provided by the firmware's Test mode, 
+[PCB Production Tests](https://github.com/airtoall/papr-firmware/blob/master/Product/Docs/Production%20Test.pdf) - suite of tests to be performed on the PAPR PCB after a PCB is assembled but before conformal coating and installation into a fully assembled PAPR unit. This document describes the firmware's Test mode, which exercises the PCB.
 
 [PCB Validation Test Suite](https://docs.google.com/document/d/1M6ftVc30-DXrsPZTG73OsVQJnZh4xsFBa8cYp-f8Py0/) - test suite to be performed by factory personnel on every newly-manufactured PAPR, to confirm that the PCB is fully working and the peripheral devices (fan, battery, charger, buzzer, buttons, lighs) are properly connected. The tests use various features of the product firmware.
 
