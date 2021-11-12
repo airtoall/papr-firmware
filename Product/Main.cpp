@@ -27,6 +27,14 @@
  * "int64_t" for charges in picoCoulombs, etc. Make sure to consistently use the correct data type for each variable,
  * and make sure your literals have the correct suffix, e.g. "123LL" for int64_t, "123UL" for uint32_t.
  * If you don't do this, the compiler will sometimes generate code that doesn't work the way you expect! Beware!
+ * 
+ * Data Memory usage - the 328p MCU chip has 2k bytes of on-chip RAM, which contains the runtime stack, global variables, 
+ * a copy of every string, and other data. When you do a build, it tells you the Minimum Memory Usage, which includes
+ * everything the compiler knows about but does not include necessary stack space. I have found that the
+ * code crashes if Minimum Memory Usage is greater than 1250 bytes or so. Make sure you keep an eye on this
+ * number and don't let it get too big. If it goes up, you need to reduce the size of global variables and/or
+ * reduce the number of character strings in the code. (Exception: character strings wrapped with "F()" don't 
+ * consume any RAM, so you can have as many of these as you like).
  */
 #include "Main.h"
 #include <LowPower.h>
