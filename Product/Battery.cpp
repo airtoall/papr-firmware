@@ -251,7 +251,7 @@ int64_t Battery::getMinimumFullyChargedMicrovolts() {
         result = MINIMUM_BATTERY_FULLY_CHARGED_MICROVOLTS;
     }
 
-    int64_t finalResult = result * (MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS / MAXIMUM_CELL_FULLY_CHARGED_MICROVOLTS);
+    int64_t finalResult = result * MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS / MAXIMUM_CELL_FULLY_CHARGED_MICROVOLTS;
     #ifdef SERIAL_DEBUG
     if (result != foo) {
         serialPrintf("fullChargeMicroVolts %s %s %s", renderLongLong(savedMicroVolts), renderLongLong(result), renderLongLong(finalResult));
