@@ -52,7 +52,7 @@ public:
     // void DEBUG_incrementPicoCoulombs(int64_t increment);
 
     // When the system is starting up, call this function.
-    void initializeCoulombCount();
+    //void initializeCoulombCount();
 
 private:
     // Update the timer information that we use to determine when the battery is fully charged.
@@ -64,7 +64,7 @@ private:
     // because of the nature of Li-ion batteries, but it's better than nothing. Anyway,
     // we only rely on the estimate until the first time the battery becomes fully charged,
     // at which time we know how much charge it has.
-    static int64_t estimatePicoCoulombsFromVoltage(int64_t microVolts);
+    //static int64_t estimatePicoCoulombsFromVoltage(int64_t microVolts);
 
     // Return the minimum voltage that the battery can have when it is fully charged.
     static int64_t getMinimumFullyChargedMicrovolts();

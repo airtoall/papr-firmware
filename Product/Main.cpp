@@ -271,7 +271,8 @@ void Main::checkForFanAlert() {
  ********************************************************************/
 
 int Main::getBatteryPercentFull() {
-    return (int)((battery.getPicoCoulombs() - BATTERY_MIN_CHARGE_PICO_COULOMBS) / ((BATTERY_CAPACITY_PICO_COULOMBS - BATTERY_MIN_CHARGE_PICO_COULOMBS) / 100LL));
+    return (int)(battery.getPicoCoulombs() / (BATTERY_CAPACITY_PICO_COULOMBS / 100LL));
+    //return (int)((battery.getPicoCoulombs() - BATTERY_MIN_CHARGE_PICO_COULOMBS) / ((BATTERY_CAPACITY_PICO_COULOMBS - BATTERY_MIN_CHARGE_PICO_COULOMBS) / 100LL));
 }
 
 void Main::updateChargerLED() {
@@ -659,7 +660,7 @@ bool Main::setup()
     hw.setPowerOnButtonInterruptCallback(this);
 
     // and we're done!
-    battery.initializeCoulombCount();
+    //battery.initializeCoulombCount();
     enterState(initialState);
     statusReport.start(10000UL);
     return false;

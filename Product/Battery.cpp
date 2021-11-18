@@ -73,28 +73,33 @@ void Battery::wakeUp() {
 //
 // Caveat: the relationship between voltage and state-of-charge in Li-ion batteries
 // is very unreliable. The best way to determine the true state-of-charge is to fully charge the battery.
-int64_t Battery::estimatePicoCoulombsFromVoltage(int64_t microVolts) {   
-    const int32_t milliVolts = ((int32_t)microVolts) / 1000L;
-    int32_t coulombs;
-
-    if (milliVolts >= 20000L) {
-        coulombs = 3000L + ((milliVolts - 20000L) * 4);
-    } else {
-        coulombs = (milliVolts - 16500L);
-    }
-
-    return ((int64_t)coulombs) * 1000000000000LL;
-}
+//int64_t Battery::estimatePicoCoulombsFromVoltage(int64_t microVolts) {   
+//    const int32_t milliVolts = ((int32_t)microVolts) / 1000L;
+//    int32_t coulombs;
+//
+//    if (milliVolts >= 20000L) {
+//        coulombs = 3000L + ((milliVolts - 20000L) * 4);
+//    } else {
+//        coulombs = (milliVolts - 16500L);
+//    }
+//
+//    return ((int64_t)coulombs) * 1000000000000LL;
+//}
 
 // Function to initialize the coulomb counter. We can't do this in the Battery constructor,
 // because the constructor runs before the hardware is fully initialized.
-void Battery::initializeCoulombCount() {
-    picoCoulombs = constrain(estimatePicoCoulombsFromVoltage(hw.readMicroVolts()), 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
-}
+//void Battery::initializeCoulombCount() {
+//    picoCoulombs = constrain(estimatePicoCoulombsFromVoltage(hw.readMicroVolts()), 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
+//}
 
 Battery::Battery()
 {
     wakeUp();
+
+    // We have no idea what the battery level is. We will only know for sure once it is fully charged.
+    // For now, it is safer to underestimate than overestimate. In practice, the only time
+    // this constructor runs is when the battery is completely dead and we plug in the charger.
+    picoCoulombs = 0LL;
 }
 
 // The Charger Connected pin indicates whether the charger is connected. It DOES NOT tell you if the 
