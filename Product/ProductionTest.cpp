@@ -41,7 +41,7 @@
 int32_t getMilliAmps() {
 	// Do several consecutive readings, so that the low-pass filter in
 	// readMicroAmps() will smooth out any jitter in the readings.
-	for (int j = 0; j < 20; j += 1) hw.readMicroAmps();
+	for (int j = 0; j < 500; j += 1) hw.readMicroAmps();
 
 	return (int32_t)(hw.readMicroAmps() / -1000LL);
 }
