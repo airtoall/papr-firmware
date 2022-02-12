@@ -89,7 +89,7 @@ To download firmware from Command Prompt, do this:
 
 Once firmware is installed, it will immediately start running. To make it run properly, you may need to disconnect the 6-pin programming connector.
 
-### Writing to the serial port
+### Using the serial port
 
 The serial port pins PD0 and PD1 are exposed via the PCB's serial header. To access the serial port from your computer:
 - if there is no serial port header, then make a header by soldering a couple of pins to the serial port's GND and TXD terminals
@@ -100,6 +100,8 @@ The serial port pins PD0 and PD1 are exposed via the PCB's serial header. To acc
 - set the terminal app to baud 57600, 8 data bits, 1 stop bit, no parity, no flow control
 
 In the firmware, use MySerial.h and MySerial.cpp to write to the serial port. If you prefer, you can use Arduino's `Serial` API directly.
+
+The above instructions cover writing to the serial port from PAPR firmware. If you want to read from the serial port, then you should also connnect TXD on the adapter to RXD on the PCB's serial port header. _WARNING_: doing this will cause the "Charger Connected" indicator to work incorrectly. Don't worry, this is expected. The indicator LED will start working properly as soon as you disconnect the serial header's RXD pin.
 
 ### Code notes
 
