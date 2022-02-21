@@ -121,7 +121,7 @@ const int64_t RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // Th
 const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs 
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;         // Battery capacity when it gets old. We use this to be safe.
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
-const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // the minimum charge (the BMS shuts down the battery around this level)
+//const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // the minimum charge (the BMS shuts down the battery around this level)
 
 // Cutoff current is calculated relative to battery capacity. C/35 is what we use here. C/50 is often used, maybe we should switch to that.
 const int64_t CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL;

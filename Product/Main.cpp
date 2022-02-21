@@ -52,7 +52,7 @@
 const char* const STATE_NAMES[] = { "Off", "On", "OffChg", "OnChg" };
 
 // indexed by ChargerStatus
-const char* const CHARGER_STATUS_NAMES[] = { "No", "Chg", "Full", "Error" };
+const char* const CHARGER_STATUS_NAMES[] = { "Off", "Chg", "Ful", "Err" };
 
 /********************************************************************
  * Fan constants
@@ -125,6 +125,9 @@ const uint32_t* const alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis };
 // generous margin, it's actually about an hour.
 const int URGENT_BATTERY_PERCENT = 8;
 
+// In order to not abuse the battery, we should shut down the PAPR when battery voltage drops too low.
+const int64_t LOWEST_ALLOWED_BATTERY_MICROVOLTS = 20000000LL;
+
 // How often does the charge reminder beep.
 const uint32_t CHARGE_REMINDER_INTERVAL_MILLIS = 30000UL;
 
@@ -180,6 +183,18 @@ void Main::flashAllLEDs(uint32_t millis, int count)
     }
 }
 
+// This code generates the user-visible signal indicating a shutdown due to low battery voltage.
+void Main::descendLEDs() {
+    for (int i = numLEDs - 1; i >= 0; i -= 1) {
+        allLEDsOff();
+        setLED(LEDpins[i], LED_ON);
+        setBuzzer(BUZZER_ON);
+        hw.delay(75UL);
+        setBuzzer(BUZZER_OFF);
+        hw.delay(125UL);
+    }
+    allLEDsOff();
+}
 
 /********************************************************************
  * Alert
@@ -346,7 +361,6 @@ void Main::checkForBatteryAlert()
 void Main::onChargerLED() {
     chargerLEDToggle = !chargerLEDToggle;
     setLED(CHARGING_LED_PIN, chargerLEDToggle ? LED_ON : LED_OFF);
-
 }
 
 // This is the callback function for the charger reminder. When it's active, this function gets called every minute or so.
@@ -393,6 +407,8 @@ void Main::enterState(PAPRState newState)
             cancelAlert();
             allLEDsOff();
             chargerLEDStatus = chargerNotConnected;
+            chargerLEDFlasher.stop();
+            chargeReminder.stop();
             break;
     }
     onStatusReport();
@@ -696,6 +712,27 @@ void Main::doAllUpdates()
 void Main::loop()
 {
     hw.wdt_reset_();
+
+    // If the battery voltage is too low and we are running the fan, we voluntarily go into Power Off state. 
+    // What voltage should we consider "too low"? 
+    // 
+	// The battery management system shuts down the power at somewhere below 2.7 volts per cell.
+    // For our 6 cell battery, that's 16.2 volts. According to a representative discharge graph
+    // for the family of lithium ion cells that our pack belongs to, 2.7 volts is over 99% discharged.
+    // At 2.95 volts, the cells are 98% discharged. For our pack, that's 17.7V. Pushing the battery
+    // all the way to full discharge is considered abusive with current generation lithium batteries.
+    // The discharge curve turns sharply downward at about 3.4 volts/cell, or 20.4 volts for  our pack.
+    // At that point you have 10% battery capacity left. I would suggest shutting down the PAPR not long after that. 
+    // 3.2V/cell, or 19.2 volts is about 5% capacity remaining. That would be a good time to shut down to avoid battery damage.
+	// There will be some capacity variation between batteries, but the voltage variation should be minimal.
+    // If you shut down a bit higher, say 20 volts, that will give plenty of margin for variation and aging.
+	// If the user lets the battery run down to where the PAPR shuts itself off at 20 volts, there is plenty
+    // of capacity remaining to go months without charging. (if the BMS itself doesn't draw too much).
+    //
+    if ((hw.readMicroVolts() < LOWEST_ALLOWED_BATTERY_MICROVOLTS) && (paprState == stateOn || (paprState == stateOnCharging && battery.getChargerStatus() == chargerError))) {
+        descendLEDs();
+        enterState(paprState == stateOn ? stateOff : stateOffCharging);
+    }
 
     switch (paprState) {
         case stateOn:
