@@ -637,9 +637,9 @@ bool Main::setup()
     serialPrintln(F("\r\n\n<<< Normal Mode >>>"));
     serialEnd();
     
-    #ifdef SERIAL_DEBUG
+    #ifdef SERIAL_VERBOSE
     serialBegin(false);
-    serialPrintln(F("\r\n\n<<< DEBUG ON >>>"));
+    serialPrintln(F("\r\n\n<<< Status reporting enabled >>>"));
     #endif
 
     // Decide what state we should be in.
@@ -775,7 +775,7 @@ extern char batteryStatusString[20];
 
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
-    #ifdef SERIAL_DEBUG
+    #ifdef SERIAL_VERBOSE
     serialPrintf("State,%s,Fan,%s,%u,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,batt,%s",
         STATE_NAMES[paprState],
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"), fanController.getRPM(),

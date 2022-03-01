@@ -243,7 +243,7 @@ void Hardware::eepromUpdateInt64(uint16_t eeprom_address, int64_t value) {
     int64_t currentValue = eepromReadInt64(eeprom_address);
     if (currentValue != value) {
         eeprom_write_block(&value, (void*)eeprom_address, sizeof(value));
-        #ifdef SERIAL_DEBUG
+        #ifdef SERIAL_VERBOSE
         serialPrintf("write eeprom %s %s", renderLongLong(currentValue), renderLongLong(value));
         #endif
     }
