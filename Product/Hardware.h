@@ -118,12 +118,18 @@ const int SERIAL_TX_PIN = 1;          // PD1   output  Can be used by Serial, us
 const int64_t NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;                  // See note below.
 const int64_t NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;                    // 0 to 1023 corresponds to 0 to 30 volts. See note below.
 const int64_t RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // The manufacturers rated battery capacity in mAh
-const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs 
-const int64_t BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;         // Battery capacity when it gets old. We use this to be safe.
+const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs
+const int64_t USABLE_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;  // We don't use battery below 20V, this reduces capacity by 10%.
+const int64_t BATTERY_CAPACITY_PICO_COULOMBS = USABLE_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;        // Battery capacity drops by 10% when it gets old.
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
 //const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // the minimum charge (the BMS shuts down the battery around this level)
 
-// Cutoff current is calculated relative to battery capacity. C/35 is what we use here. C/50 is often used, maybe we should switch to that.
+// In order to not abuse the battery, we need to shut down the PAPR when battery voltage drops below 20V. 
+const int64_t LOWEST_ALLOWED_BATTERY_MICROVOLTS = 20000000LL;
+
+// When the battery is charginng, there is a substantial current going into the battery. As the battery approaches full,
+// the current diminishes. We know the battery is fully charged when the current falls below a known cutoff value.
+// The cutoff current is calculated relative to battery capacity. C/35 is what we use here. C/50 is often used, maybe we should switch to that.
 const int64_t CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL;
 const int64_t CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;     // to allow for variations in the readings
 

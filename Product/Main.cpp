@@ -125,9 +125,6 @@ const uint32_t* const alertMillis[] = { 0, batteryAlertMillis, fanAlertMillis };
 // generous margin, it's actually about an hour.
 const int URGENT_BATTERY_PERCENT = 8;
 
-// In order to not abuse the battery, we should shut down the PAPR when battery voltage drops too low.
-const int64_t LOWEST_ALLOWED_BATTERY_MICROVOLTS = 20000000LL;
-
 // How often does the charge reminder beep.
 const uint32_t CHARGE_REMINDER_INTERVAL_MILLIS = 30000UL;
 
@@ -424,18 +421,18 @@ void Main::enterState(PAPRState newState)
 // a lot of things! 
 // 
 // When this function returns, the board MUST be in full power mode,
-// and the watchdog timer MUST be enabled. 
+// and the watchdog timer MUST be enabled.
 void Main::nap()
 {
-    hw.wdt_disable();
+    hw.wdt_disable(); ////
     hw.setPowerMode(lowPowerMode);
     while (true) {
         LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
-
+        //// hw.wdt_reset_();
         if (battery.isChargerConnected()) {
             hw.setPowerMode(fullPowerMode);
             enterState(stateOffCharging);
-            hw.wdt_enable(WATCHDOG_TIMEOUT);
+            hw.wdt_enable(WATCHDOG_TIMEOUT); ////
             return;
         }
 
@@ -444,8 +441,8 @@ void Main::nap()
             if (hw.millis() - wakeupTimeMillis > 125UL) { // we're at 1/8 speed, so this is really 1000 ms (8 * 125)
                 hw.setPowerMode(fullPowerMode);
                 enterState(stateOn);
-                while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {}
-                hw.wdt_enable(WATCHDOG_TIMEOUT);
+                while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {} ////
+                hw.wdt_enable(WATCHDOG_TIMEOUT); ////
                 return;
             }
         }
