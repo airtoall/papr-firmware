@@ -186,9 +186,9 @@ void Main::descendLEDs() {
         allLEDsOff();
         setLED(LEDpins[i], LED_ON);
         setBuzzer(BUZZER_ON);
-        hw.delay(75UL);
+        hw.delay(150UL);
         setBuzzer(BUZZER_OFF);
-        hw.delay(125UL);
+        hw.delay(100UL);
     }
     allLEDsOff();
 }
