@@ -233,9 +233,11 @@ void Hardware::setup() {
 
 void Hardware::setBuzzer(int onOff, int32_t frequencyHz, int dutyCyclePercent) {
     if (onOff) {
-        startPB2PWM(frequencyHz, dutyCyclePercent);
+        //startPB2PWM(frequencyHz, dutyCyclePercent);
+        ::analogWrite(BUZZER_PIN, 128);
     } else {
-        stopPB2PWM();
+        //stopPB2PWM();
+        ::analogWrite(BUZZER_PIN, 0);
     }
 }
 
