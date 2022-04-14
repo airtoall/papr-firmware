@@ -186,6 +186,11 @@ void Battery::update()
     // update our counter of the battery charge. Don't let the number get out of range.
     picoCoulombs = picoCoulombs + deltaPicoCoulombs;
     picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
+
+    // Don't count any power in the battery when the voltage is less than 20 Volts. That energy is our secret stash.
+    if (hw.readMicroVolts() < LOWEST_ALLOWED_BATTERY_MICROVOLTS) {
+        picoCoulombs = 0LL;
+    }
  
     // if the battery is charging, and has now reached the maximum charge,
     // we will set the battery coulomb counter to 100% of the battery capacity.

@@ -119,12 +119,12 @@ const int64_t NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;                  // Se
 const int64_t NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;                    // 0 to 1023 corresponds to 0 to 30 volts. See note below.
 const int64_t RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // The manufacturers rated battery capacity in mAh
 const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs
-const int64_t USABLE_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.917;// We don't use battery below 20V, this reduces capacity by ~8.3%.
+const int64_t USABLE_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.917;// We don't use battery below 20V, which reduces capacity by ~8.3%.
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS = USABLE_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;        // Battery capacity drops by 10% when it gets old.
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
-//const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // the minimum charge (the BMS shuts down the battery around this level)
 
-// In order to not abuse the battery, we need to shut down the PAPR when battery voltage drops below 20V. 
+// Shut down the PAPR when battery voltage drops below 20V. This helps prolong battery life, and reserves enough battery
+// power to get us through several months of sitting on the shelf in the Off state.
 const int64_t LOWEST_ALLOWED_BATTERY_MICROVOLTS = 20000000LL;
 
 // When the battery is charginng, there is a substantial current going into the battery. As the battery approaches full,

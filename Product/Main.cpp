@@ -230,7 +230,7 @@ void Main::cancelAlert()
 
 // Turn the buzzer on or off.
 void Main::setBuzzer(int onOff) {
-    hw.setBuzzer(onOff, BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
+    //TEMP hw.setBuzzer(onOff, BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
     buzzerState = onOff;
 }
 
@@ -424,15 +424,14 @@ void Main::enterState(PAPRState newState)
 // and the watchdog timer MUST be enabled.
 void Main::nap()
 {
-    hw.wdt_disable(); ////
     hw.setPowerMode(lowPowerMode);
     while (true) {
-        LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
-        //// hw.wdt_reset_();
+        LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_ON);
+        //if (hw.digitalRead(FAN_UP_PIN) == BUTTON_RELEASED) //
+        hw.wdt_reset_();
         if (battery.isChargerConnected()) {
             hw.setPowerMode(fullPowerMode);
             enterState(stateOffCharging);
-            hw.wdt_enable(WATCHDOG_TIMEOUT); ////
             return;
         }
 
@@ -441,8 +440,6 @@ void Main::nap()
             if (hw.millis() - wakeupTimeMillis > 125UL) { // we're at 1/8 speed, so this is really 1000 ms (8 * 125)
                 hw.setPowerMode(fullPowerMode);
                 enterState(stateOn);
-                while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {} ////
-                hw.wdt_enable(WATCHDOG_TIMEOUT); ////
                 return;
             }
         }
@@ -666,7 +663,7 @@ bool Main::setup()
     // Enable the watchdog timer. (Note: Don't make the timeout value too small - we need to give the IDE a chance to
     // call the bootloader in case something dumb happens during development and the WDT
     // resets the MCU too quickly. Once the code is solid, you could make it shorter.)
-    wdt_enable(WATCHDOG_TIMEOUT);
+    hw.wdt_enable(WATCHDOG_TIMEOUT);
 
     // Enable pin-change interrupts for the Power On button, and register a callback to handle those interrupts.
     // The interrupt serves 2 distinct purposes: (1) to get this callback called, and (2) to wake us up if we're napping.
@@ -727,8 +724,8 @@ void Main::loop()
     // of capacity remaining to go months without charging. (if the BMS itself doesn't draw too much).
     //
     if ((hw.readMicroVolts() < LOWEST_ALLOWED_BATTERY_MICROVOLTS) && (paprState == stateOn || (paprState == stateOnCharging && battery.getChargerStatus() == chargerError))) {
-        descendLEDs();
-        enterState(paprState == stateOn ? stateOff : stateOffCharging);
+        //TEMP descendLEDs();
+        //TEMP enterState(paprState == stateOn ? stateOff : stateOffCharging);
     }
 
     switch (paprState) {

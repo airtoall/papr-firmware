@@ -182,7 +182,8 @@ done:
 
 void testSpeaker() {
 	serialPrintln(F("Speaker Test"));
-	startPB2PWM(BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
+	//startPB2PWM(BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
+	::analogWrite(BUZZER_PIN, 128);
 	for (int i = 0; i < 12; i += 1) {
 		for (int j = 0; j < 5; j += 1) {
 			serialPrint(F("."));
@@ -192,7 +193,8 @@ void testSpeaker() {
 	}
 
 done:
-	stopPB2PWM();
+	//stopPB2PWM();
+	::analogWrite(BUZZER_PIN, 0);
 	serialPrintln(F("\r\nSpeaker Test ended"));
 }
 
