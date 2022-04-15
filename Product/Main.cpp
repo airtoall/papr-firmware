@@ -62,22 +62,6 @@ const char* const CHARGER_STATUS_NAMES[] = { "Off", "Chg", "Ful", "Err" };
 // more often, while a higher value will give more accurate and smooth readings.
 const uint32_t FAN_SPEED_READING_INTERVAL = 1000UL;
 
-/* Here are measured values for fan RPM for the San Ace 9GA0412P3K011
-   %    MIN     MAX     AVG
-
-   0,    7461,   7480,    7479
-  10,    9431,   9481,    9456
-  20,   11264,  11284,   11274
-  30,   12908,  12947,   12928
-  40,   14580,  14626,   14603
-  50,   16047,  16177,   16112
-  60,   17682,  17743,   17743
-  70,   19092,  19150,   19121
-  80,   20408,  20488,   20448
-  90,   21510,  21556,   21533
- 100,   22215,  22327,   22271 
-*/
-
 // How much tolerance do we give when checking for correct fan RPM. We allow +/- 15%.
 // We use float here, which is quite slow on our little MCU, but it's OK because we don't do it very much.
 const float LOWEST_FAN_OK_RPM = 0.85;

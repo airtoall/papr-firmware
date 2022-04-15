@@ -155,10 +155,10 @@ void testFan() {
 		for (int speed = 0; speed < numFanSpeeds; speed += 1) {
 			fanController.setDutyCycle(fanDutyCycles[speed]);
 			serialPrintf("%s speed, duty cycle %d", FAN_SPEED_NAMES[speed], fanDutyCycles[speed]);
-			for (int i = 0; i < 5; i += 1) {
+			for (int i = 0; i < 8; i += 1) {
 				pause(1000);
 				uint16_t rpm = fanController.getRPM();
-				serialPrintf("   RPM %u, %ld milliAmps", rpm, getMilliAmps());
+				serialPrintf("   %u RPM, %ld milliAmps", rpm, getMilliAmps());
 			}
 		}
 		hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
