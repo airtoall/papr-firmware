@@ -1,7 +1,7 @@
 #include "MiscConstants.h"
 
 // TODO make this automatically update during build process
-const char* PRODUCT_ID = "Air-to-All PAPR Rev 3.1A";
+const char* PRODUCT_ID = "Air-to-All PAPR 3.1A build xxxx";
 
 const char* FAN_SPEED_NAMES[] = { "Low", "Medium", "High" };
 
