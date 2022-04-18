@@ -118,12 +118,18 @@ const int SERIAL_TX_PIN = 1;          // PD1   output  Can be used by Serial, us
 const int64_t NANO_AMPS_PER_CHARGE_FLOW_UNIT = 6516781LL;                  // See note below.
 const int64_t NANO_VOLTS_PER_VOLTAGE_UNIT = 29325513LL;                    // 0 to 1023 corresponds to 0 to 30 volts. See note below.
 const int64_t RATED_BATTERY_CAPACITY_MAH = 7000LL;                         // The manufacturers rated battery capacity in mAh
-const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs 
-const int64_t BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;         // Battery capacity when it gets old. We use this to be safe.
+const int64_t RATED_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_MAH * 3600000000000LL; // The manufacturers rated battery capacity in picocoulombs
+const int64_t USABLE_BATTERY_CAPACITY_PICO_COULOMBS = RATED_BATTERY_CAPACITY_PICO_COULOMBS * 0.917;// We don't use battery below 20V, which reduces capacity by ~8.3%.
+const int64_t BATTERY_CAPACITY_PICO_COULOMBS = USABLE_BATTERY_CAPACITY_PICO_COULOMBS * 0.9;        // Battery capacity drops by 10% when it gets old.
 const int64_t BATTERY_CAPACITY_PICO_COULOMBS_ALMOST = BATTERY_CAPACITY_PICO_COULOMBS * 0.99;       // Battery is almost full.
-const int64_t BATTERY_MIN_CHARGE_PICO_COULOMBS = 2100000000000000LL;       // the minimum charge (the BMS shuts down the battery around this level)
 
-// Cutoff current is calculated relative to battery capacity. C/35 is what we use here. C/50 is often used, maybe we should switch to that.
+// Shut down the PAPR when battery voltage drops below 20V. This helps prolong battery life, and reserves enough battery
+// power to get us through several months of sitting on the shelf in the Off state.
+const int64_t LOWEST_ALLOWED_BATTERY_MICROVOLTS = 20000000LL;
+
+// When the battery is charginng, there is a substantial current going into the battery. As the battery approaches full,
+// the current diminishes. We know the battery is fully charged when the current falls below a known cutoff value.
+// The cutoff current is calculated relative to battery capacity. C/35 is what we use here. C/50 is often used, maybe we should switch to that.
 const int64_t CHARGE_MICRO_AMPS_WHEN_FULL = RATED_BATTERY_CAPACITY_MAH * 1000LL / 35LL;
 const int64_t CHARGE_MICRO_AMPS_WHEN_FULL_FUDGE = CHARGE_MICRO_AMPS_WHEN_FULL * 0.9;     // to allow for variations in the readings
 
@@ -174,6 +180,28 @@ no problem.
 The final equation therefore is
 Current_in_mA = (ADC6 - PC1) * 6.516780710329097
 */
+
+/*
+Here's a note from Brent Bolton on how we calculate "usable battery capacity". We are using LOWEST_ALLOWED_BATTERY_MICROVOLTS = 20.0V as the cutoff voltage.
+
+The battery management system shuts down the power at somewhere below 2.7 volts per cell. For our 6 cell battery, that's 16.2 volts.
+
+According to a representative discharge graph for the family of lithium ion cells that our pack belongs to, 2.7 volts is over 99% discharged. 
+At 2.95 volts, the cells are 98% discharged. For our pack, that's 17.7V. Pushing the battery all the way to full discharge is considered 
+abusive with current generation lithium batteries.
+
+The discharge curve turns sharply downward at about 3.4 volts/cell, or 20.4 volts for our pack. At that point you have 10% battery capacity left. 
+I would suggest shutting down the PAPR not long after that. 3.2V/cell, or 19.2 volts is about 5% capacity remaining. 
+That would be a good time to shut down to avoid battery damage.
+
+There will be some capacity variation between batteries, but the voltage variation should be minimal. If you shut down a bit higher, 
+say 20 volts, that will give plenty of margin for variation and aging.
+
+If the user lets the battery run down to where the PAPR shuts itself off at 20 volts, there is plenty of capacity remaining to sleep for
+months without charging. (if the BMS itself doesn't draw too much)
+
+*/
+
 
 // The MCU's fuse bytes should be set as follows
 //   low fuse byte 0x72

@@ -233,9 +233,11 @@ void Hardware::setup() {
 
 void Hardware::setBuzzer(int onOff, int32_t frequencyHz, int dutyCyclePercent) {
     if (onOff) {
-        startPB2PWM(frequencyHz, dutyCyclePercent);
+        //startPB2PWM(frequencyHz, dutyCyclePercent);
+        ::analogWrite(BUZZER_PIN, 128);
     } else {
-        stopPB2PWM();
+        //stopPB2PWM();
+        ::analogWrite(BUZZER_PIN, 0);
     }
 }
 
@@ -243,7 +245,7 @@ void Hardware::eepromUpdateInt64(uint16_t eeprom_address, int64_t value) {
     int64_t currentValue = eepromReadInt64(eeprom_address);
     if (currentValue != value) {
         eeprom_write_block(&value, (void*)eeprom_address, sizeof(value));
-        #ifdef SERIAL_DEBUG
+        #ifdef SERIAL_VERBOSE
         serialPrintf("write eeprom %s %s", renderLongLong(currentValue), renderLongLong(value));
         #endif
     }

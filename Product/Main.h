@@ -58,6 +58,7 @@ private:
     void setLED(const int pin, int onOff);
     void setLEDs(const int* pinList, int onOff);
     void flashAllLEDs(uint32_t millis, int count);
+    void descendLEDs();
     void onToggleAlert();
     void onChargeReminder();
     void onStatusReport();

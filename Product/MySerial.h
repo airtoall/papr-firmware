@@ -11,4 +11,4 @@ void serialPrintToBuffer(char* buffer, size_t bufferSize, const char* __fmt, ...
 char* renderLongLong(int64_t num);
 
 
-#define SERIAL_DEBUG // define this symbol to enable debug output to the serial port
+#define SERIAL_VERBOSE // define this symbol to enable periodic status report on the serial port

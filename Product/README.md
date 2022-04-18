@@ -73,7 +73,7 @@ If you have a PCB whose microcontroller has never been set up, you must first pr
 This will set the fuse bytes to:
 - low byte = 0x72
 - high byte = 0xDA
-- extended byte = 0xFF
+- extended byte = 0xFD
 
 These fuse bytes configure the MCU clock to 8 MHz using the internal oscillator (no crystal required), and set the initial clock divider to 8, which results in a clock speed of 1 MHz. For more details on the fuse bytes, see the ATMega328p datasheet.
 

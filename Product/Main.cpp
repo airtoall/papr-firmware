@@ -52,7 +52,7 @@
 const char* const STATE_NAMES[] = { "Off", "On", "OffChg", "OnChg" };
 
 // indexed by ChargerStatus
-const char* const CHARGER_STATUS_NAMES[] = { "No", "Chg", "Full", "Error" };
+const char* const CHARGER_STATUS_NAMES[] = { "Off", "Chg", "Ful", "Err" };
 
 /********************************************************************
  * Fan constants
@@ -61,22 +61,6 @@ const char* const CHARGER_STATUS_NAMES[] = { "No", "Chg", "Full", "Error" };
 // How many milliseconds should there be between readings of the fan speed. A smaller value will update
 // more often, while a higher value will give more accurate and smooth readings.
 const uint32_t FAN_SPEED_READING_INTERVAL = 1000UL;
-
-/* Here are measured values for fan RPM for the San Ace 9GA0412P3K011
-   %    MIN     MAX     AVG
-
-   0,    7461,   7480,    7479
-  10,    9431,   9481,    9456
-  20,   11264,  11284,   11274
-  30,   12908,  12947,   12928
-  40,   14580,  14626,   14603
-  50,   16047,  16177,   16112
-  60,   17682,  17743,   17743
-  70,   19092,  19150,   19121
-  80,   20408,  20488,   20448
-  90,   21510,  21556,   21533
- 100,   22215,  22327,   22271 
-*/
 
 // How much tolerance do we give when checking for correct fan RPM. We allow +/- 15%.
 // We use float here, which is quite slow on our little MCU, but it's OK because we don't do it very much.
@@ -180,6 +164,18 @@ void Main::flashAllLEDs(uint32_t millis, int count)
     }
 }
 
+// This code generates the user-visible signal indicating a shutdown due to low battery voltage.
+void Main::descendLEDs() {
+    for (int i = numLEDs - 1; i >= 0; i -= 1) {
+        allLEDsOff();
+        setLED(LEDpins[i], LED_ON);
+        setBuzzer(BUZZER_ON);
+        hw.delay(150UL);
+        setBuzzer(BUZZER_OFF);
+        hw.delay(100UL);
+    }
+    allLEDsOff();
+}
 
 /********************************************************************
  * Alert
@@ -346,7 +342,6 @@ void Main::checkForBatteryAlert()
 void Main::onChargerLED() {
     chargerLEDToggle = !chargerLEDToggle;
     setLED(CHARGING_LED_PIN, chargerLEDToggle ? LED_ON : LED_OFF);
-
 }
 
 // This is the callback function for the charger reminder. When it's active, this function gets called every minute or so.
@@ -393,6 +388,8 @@ void Main::enterState(PAPRState newState)
             cancelAlert();
             allLEDsOff();
             chargerLEDStatus = chargerNotConnected;
+            chargerLEDFlasher.stop();
+            chargeReminder.stop();
             break;
     }
     onStatusReport();
@@ -408,18 +405,17 @@ void Main::enterState(PAPRState newState)
 // a lot of things! 
 // 
 // When this function returns, the board MUST be in full power mode,
-// and the watchdog timer MUST be enabled. 
+// and the watchdog timer MUST be enabled.
 void Main::nap()
 {
-    hw.wdt_disable();
     hw.setPowerMode(lowPowerMode);
     while (true) {
-        LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
-
+        LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_ON);
+        //if (hw.digitalRead(FAN_UP_PIN) == BUTTON_RELEASED) //
+        hw.wdt_reset_();
         if (battery.isChargerConnected()) {
             hw.setPowerMode(fullPowerMode);
             enterState(stateOffCharging);
-            hw.wdt_enable(WATCHDOG_TIMEOUT);
             return;
         }
 
@@ -428,8 +424,6 @@ void Main::nap()
             if (hw.millis() - wakeupTimeMillis > 125UL) { // we're at 1/8 speed, so this is really 1000 ms (8 * 125)
                 hw.setPowerMode(fullPowerMode);
                 enterState(stateOn);
-                while (hw.digitalRead(POWER_ON_PIN) == BUTTON_PUSHED) {}
-                hw.wdt_enable(WATCHDOG_TIMEOUT);
                 return;
             }
         }
@@ -624,9 +618,9 @@ bool Main::setup()
     serialPrintln(F("\r\n\n<<< Normal Mode >>>"));
     serialEnd();
     
-    #ifdef SERIAL_DEBUG
+    #ifdef SERIAL_VERBOSE
     serialBegin(false);
-    serialPrintln(F("\r\n\n<<< DEBUG ON >>>"));
+    serialPrintln(F("\r\n\n<<< Status reporting enabled >>>"));
     #endif
 
     // Decide what state we should be in.
@@ -653,7 +647,7 @@ bool Main::setup()
     // Enable the watchdog timer. (Note: Don't make the timeout value too small - we need to give the IDE a chance to
     // call the bootloader in case something dumb happens during development and the WDT
     // resets the MCU too quickly. Once the code is solid, you could make it shorter.)
-    wdt_enable(WATCHDOG_TIMEOUT);
+    hw.wdt_enable(WATCHDOG_TIMEOUT);
 
     // Enable pin-change interrupts for the Power On button, and register a callback to handle those interrupts.
     // The interrupt serves 2 distinct purposes: (1) to get this callback called, and (2) to wake us up if we're napping.
@@ -696,6 +690,27 @@ void Main::doAllUpdates()
 void Main::loop()
 {
     hw.wdt_reset_();
+
+    // If the battery voltage is too low and we are running the fan, we voluntarily go into Power Off state. 
+    // What voltage should we consider "too low"? 
+    // 
+	// The battery management system shuts down the power at somewhere below 2.7 volts per cell.
+    // For our 6 cell battery, that's 16.2 volts. According to a representative discharge graph
+    // for the family of lithium ion cells that our pack belongs to, 2.7 volts is over 99% discharged.
+    // At 2.95 volts, the cells are 98% discharged. For our pack, that's 17.7V. Pushing the battery
+    // all the way to full discharge is considered abusive with current generation lithium batteries.
+    // The discharge curve turns sharply downward at about 3.4 volts/cell, or 20.4 volts for  our pack.
+    // At that point you have 10% battery capacity left. I would suggest shutting down the PAPR not long after that. 
+    // 3.2V/cell, or 19.2 volts is about 5% capacity remaining. That would be a good time to shut down to avoid battery damage.
+	// There will be some capacity variation between batteries, but the voltage variation should be minimal.
+    // If you shut down a bit higher, say 20 volts, that will give plenty of margin for variation and aging.
+	// If the user lets the battery run down to where the PAPR shuts itself off at 20 volts, there is plenty
+    // of capacity remaining to go months without charging. (if the BMS itself doesn't draw too much).
+    //
+    if ((hw.readMicroVolts() < LOWEST_ALLOWED_BATTERY_MICROVOLTS) && (paprState == stateOn || (paprState == stateOnCharging && battery.getChargerStatus() == chargerError))) {
+        descendLEDs();
+        enterState(paprState == stateOn ? stateOff : stateOffCharging);
+    }
 
     switch (paprState) {
         case stateOn:
@@ -741,7 +756,7 @@ extern char batteryStatusString[20];
 
 // Write a one-line summary of the status of everything. For use in testing and debugging.
 void Main::onStatusReport() {
-    #ifdef SERIAL_DEBUG
+    #ifdef SERIAL_VERBOSE
     serialPrintf("State,%s,Fan,%s,%u,Buzzer,%s,Alert,%s,Reminder,%s,Charger,%s,LEDs,%s,%s,%s,%s,%s,%s,%s,milliVolts,%ld,milliAmps,%ld,Coulombs,%ld,charge,%d%%,batt,%s",
         STATE_NAMES[paprState],
         (currentFanSpeed == fanLow) ? "lo" : ((currentFanSpeed == fanMedium) ? "med" : "hi"), fanController.getRPM(),

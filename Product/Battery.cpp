@@ -138,9 +138,6 @@ void Battery::updateBatteryTimers()
     bool isChargerConnectedNow = isChargerConnected();
     if (isChargerConnectedNow && !prevIsChargerConnected) {
         // the charger was just connected
-        #ifdef SERIAL_DEBUG
-        serialPrintln(F("charger connected"));
-        #endif
         chargeStartMilliSecs = hw.millis();
     }
     prevIsChargerConnected = isChargerConnectedNow;
@@ -186,6 +183,11 @@ void Battery::update()
     // update our counter of the battery charge. Don't let the number get out of range.
     picoCoulombs = picoCoulombs + deltaPicoCoulombs;
     picoCoulombs = constrain(picoCoulombs, 0LL, BATTERY_CAPACITY_PICO_COULOMBS);
+
+    // Don't count any power in the battery when the voltage is less than 20 Volts. That energy is our secret stash.
+    if (hw.readMicroVolts() < LOWEST_ALLOWED_BATTERY_MICROVOLTS) {
+        picoCoulombs = 0LL;
+    }
  
     // if the battery is charging, and has now reached the maximum charge,
     // we will set the battery coulomb counter to 100% of the battery capacity.
@@ -196,7 +198,7 @@ void Battery::update()
     // 4. the battery voltage is within the expected range for a fully-charged battery, AND
     // 5. the charging current flow rate is quite low
     uint32_t nowMillis = hw.millis();
-    #ifdef SERIAL_DEBUG
+    #ifdef SERIAL_VERBOSE
         serialPrintToBuffer(batteryStatusString, sizeof(batteryStatusString), "%d %d %d %d %d",
             isChargerConnected(),
             ((nowMillis - chargeStartMilliSecs) > CHARGER_WIND_DOWN_TIME_MILLIS),
@@ -257,7 +259,7 @@ int64_t Battery::getMinimumFullyChargedMicrovolts() {
     }
 
     int64_t finalResult = result * MINIMUM_CELL_FULLY_CHARGED_MICROVOLTS / MAXIMUM_CELL_FULLY_CHARGED_MICROVOLTS;
-    #ifdef SERIAL_DEBUG
+    #ifdef SERIAL_VERBOSE
     if (result != foo) {
         serialPrintf("fullChargeMicroVolts %s %s %s", renderLongLong(savedMicroVolts), renderLongLong(result), renderLongLong(finalResult));
         foo = result;

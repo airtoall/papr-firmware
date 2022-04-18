@@ -155,10 +155,10 @@ void testFan() {
 		for (int speed = 0; speed < numFanSpeeds; speed += 1) {
 			fanController.setDutyCycle(fanDutyCycles[speed]);
 			serialPrintf("%s speed, duty cycle %d", FAN_SPEED_NAMES[speed], fanDutyCycles[speed]);
-			for (int i = 0; i < 5; i += 1) {
+			for (int i = 0; i < 8; i += 1) {
 				pause(1000);
 				uint16_t rpm = fanController.getRPM();
-				serialPrintf("   RPM %u, %ld milliAmps", rpm, getMilliAmps());
+				serialPrintf("   %u RPM, %ld milliAmps", rpm, getMilliAmps());
 			}
 		}
 		hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
@@ -182,7 +182,8 @@ done:
 
 void testSpeaker() {
 	serialPrintln(F("Speaker Test"));
-	startPB2PWM(BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
+	//startPB2PWM(BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
+	::analogWrite(BUZZER_PIN, 128);
 	for (int i = 0; i < 12; i += 1) {
 		for (int j = 0; j < 5; j += 1) {
 			serialPrint(F("."));
@@ -192,7 +193,8 @@ void testSpeaker() {
 	}
 
 done:
-	stopPB2PWM();
+	//stopPB2PWM();
+	::analogWrite(BUZZER_PIN, 0);
 	serialPrintln(F("\r\nSpeaker Test ended"));
 }
 
@@ -350,7 +352,7 @@ void productionTestSetup() {
 	serialPrintln(F("6 - Battery Voltage test"));
 	serialPrintln(F("7 - Charger Detect test"));
 	serialPrintln(F("8 - Current Sensor test"));
-	//serialPrintln(F("r - Reset"));
+	serialPrintln(F("r - Reset"));
 }
 
 void productionTestLoop() {
@@ -366,7 +368,7 @@ void productionTestLoop() {
 		case '6': testBatteryVoltage(); break;
 		case '7': testChargerDetect(); break;
 		case '8': testCurrentSensor(); break;
-		//case 'r': hw.reset(); break;
+		case 'r': case 'R': hw.reset(); break;
 		default: serialPrintf("Unknown command '%c'", command); break;
 	}
 }
