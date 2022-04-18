@@ -214,7 +214,7 @@ void Main::cancelAlert()
 
 // Turn the buzzer on or off.
 void Main::setBuzzer(int onOff) {
-    //TEMP hw.setBuzzer(onOff, BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
+    hw.setBuzzer(onOff, BUZZER_FREQUENCY, BUZZER_DUTYCYCLE);
     buzzerState = onOff;
 }
 
@@ -708,8 +708,8 @@ void Main::loop()
     // of capacity remaining to go months without charging. (if the BMS itself doesn't draw too much).
     //
     if ((hw.readMicroVolts() < LOWEST_ALLOWED_BATTERY_MICROVOLTS) && (paprState == stateOn || (paprState == stateOnCharging && battery.getChargerStatus() == chargerError))) {
-        //TEMP descendLEDs();
-        //TEMP enterState(paprState == stateOn ? stateOff : stateOffCharging);
+        descendLEDs();
+        enterState(paprState == stateOn ? stateOff : stateOffCharging);
     }
 
     switch (paprState) {
