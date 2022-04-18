@@ -138,9 +138,6 @@ void Battery::updateBatteryTimers()
     bool isChargerConnectedNow = isChargerConnected();
     if (isChargerConnectedNow && !prevIsChargerConnected) {
         // the charger was just connected
-        #ifdef SERIAL_VERBOSE
-        serialPrintln(F("charger connected"));
-        #endif
         chargeStartMilliSecs = hw.millis();
     }
     prevIsChargerConnected = isChargerConnectedNow;
