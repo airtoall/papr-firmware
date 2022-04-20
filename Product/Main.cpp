@@ -408,14 +408,14 @@ void Main::enterState(PAPRState newState)
 // and the watchdog timer MUST be enabled.
 void Main::nap()
 {
+    hw.wdt_disable();
     hw.setPowerMode(lowPowerMode);
     while (true) {
         LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_ON);
-        //if (hw.digitalRead(FAN_UP_PIN) == BUTTON_RELEASED) //
-        hw.wdt_reset_();
         if (battery.isChargerConnected()) {
             hw.setPowerMode(fullPowerMode);
             enterState(stateOffCharging);
+            hw.wdt_enable(WATCHDOG_TIMEOUT);
             return;
         }
 
@@ -424,6 +424,7 @@ void Main::nap()
             if (hw.millis() - wakeupTimeMillis > 125UL) { // we're at 1/8 speed, so this is really 1000 ms (8 * 125)
                 hw.setPowerMode(fullPowerMode);
                 enterState(stateOn);
+                hw.wdt_enable(WATCHDOG_TIMEOUT);
                 return;
             }
         }
