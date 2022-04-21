@@ -75,7 +75,12 @@ This will set the fuse bytes to:
 - high byte = 0xDA
 - extended byte = 0xFD
 
-These fuse bytes configure the MCU clock to 8 MHz using the internal oscillator (no crystal required), and set the initial clock divider to 8, which results in a clock speed of 1 MHz. For more details on the fuse bytes, see the ATMega328p datasheet.
+These fuse settings:
+* configure the MCU clock to 8 MHz using the internal oscillator, so that no crystal is required
+* set the initial clock divider to 8, giving an initial clock speed of 1 MHz
+* enable brown-out detection
+
+See the ATMega328p datasheet for more about fuse bytes.
 
 ### Downloading firmware 
 
