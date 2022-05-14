@@ -1,6 +1,7 @@
 #include "Battery.h"
 #include "Hardware.h"
 #include "MySerial.h"
+#include "MiscConstants.h"
 
 #define hw Hardware::instance
 
@@ -41,8 +42,6 @@
  * REFERENCE_VOLTAGE_PIN - a 10-bit ADC. Readings from this ADC must be combined with CHARGE CURRENT readings.
  * CHARGER_CONNECTED_PIN - a 1-bit digital input that says whether or not a charger is connected.
  */
-
-const uint16_t SAVED_MAX_VOLTAGE_ADDRESS = 8;
 
 char batteryStatusString[20];
 

@@ -26,7 +26,7 @@
 * starts behaving erratically.
 */
 #include "ProductionTest.h"
-#include "PB2PWM.h"
+#include "PD3PWM.h"
 #include "MySerial.h"
 #include "Hardware.h"
 #include "FanController.h"
@@ -49,6 +49,11 @@ int32_t getMilliAmps() {
 /********************************************************************
  * Command handling
  ********************************************************************/
+
+void flushSerialInput() {
+	hw.delay(100L);
+	while (Serial.peek() != -1) Serial.read();
+}
 
 bool isLineEnd(int c) {
 	return (c == 10) || (c == 13);
@@ -73,10 +78,7 @@ int getNextCommand() {
 			// terminal apps save up typed characters and sends them when the user hits "enter".
 			// In case we are talking to the latter, we will delay for a moment, and
 			// then discard any other characters on the same line as the command.
-			hw.delay(100L);
-			while (Serial.peek() != -1) {
-				Serial.read();
-			}
+			flushSerialInput();
 
 			return result;
 		}
@@ -88,8 +90,7 @@ int getNextCommand() {
 bool doPause(int waitTimeMillis) {
 	while (waitTimeMillis > 0) {
 		if (Serial.peek() != -1) {
-			hw.delay(100L);
-			while (Serial.peek() != -1) Serial.read();
+			flushSerialInput();
 			return false;
 		}
 		hw.delay(50L);
@@ -154,11 +155,11 @@ void testFan() {
 		hw.digitalWrite(FAN_ENABLE_PIN, FAN_ON);
 		for (int speed = 0; speed < numFanSpeeds; speed += 1) {
 			fanController.setDutyCycle(fanDutyCycles[speed]);
-			serialPrintf("%s speed, duty cycle %d", FAN_SPEED_NAMES[speed], fanDutyCycles[speed]);
+			serialPrintf("%s speed, duty %d", FAN_SPEED_NAMES[speed], fanDutyCycles[speed]);
 			for (int i = 0; i < 8; i += 1) {
 				pause(1000);
 				uint16_t rpm = fanController.getRPM();
-				serialPrintf("   %u RPM, %ld milliAmps", rpm, getMilliAmps());
+				serialPrintf("   %u RPM, %ld mA", rpm, getMilliAmps());
 			}
 		}
 		hw.digitalWrite(FAN_ENABLE_PIN, FAN_OFF);
@@ -189,7 +190,7 @@ void testSpeaker() {
 			serialPrint(F("."));
 			pause(1000);
 		}
-		serialPrintf("\r\n%ld milliAmps", getMilliAmps());
+		serialPrintf("\r\n%ld mA", getMilliAmps());
 	}
 
 done:
@@ -241,7 +242,7 @@ void testVoltageReference() {
 		// want to specify it more tightly than that to allow for variations over
 		// the life of the unit.
 		int32_t referenceReading = hw.analogRead(REFERENCE_VOLTAGE_PIN);
-		serialPrintf("%ld milliVolts", (5000L * referenceReading) / 1024L);
+		serialPrintf("%ld mV", (5000L * referenceReading) / 1024L);
 		pause(1000);
 	}
 
@@ -256,7 +257,7 @@ done:
 void testBatteryVoltage() {
 	serialPrintln(F("Battery Voltage Test"));
 	while (true) {
-		serialPrintf("%ld milliVolts", (int32_t)(hw.readMicroVolts() / 1000LL));
+		serialPrintf("%ld mV", (int32_t)(hw.readMicroVolts() / 1000LL));
 		pause(1000);
 	}
 
@@ -328,11 +329,61 @@ void testCurrentSensor() {
 
 	while (true) {
 		pause(1000);
-		serialPrintf("%ld milliAmps", getMilliAmps());
+		serialPrintf("%ld mA", getMilliAmps());
 	}
 
 done:
 	serialPrintln(F("\r\nCurrent Sensor Test ended"));
+}
+
+/********************************************************************
+ * Calibrate the MCU internal oscillator
+ ********************************************************************/
+
+void calibrateMCUClock() {
+	serialPrintln(F("Connect an oscilloscope to fan connnector pin 4."));
+	serialPrintln(F("Type + and - keys to adjust the frequency as close as possible to 1.000 MHz"));
+	serialPrintln(F("Type s to save calibration. Type q to abandon."));
+
+	int originalValue = OSCCAL;
+	startPD3PWM(1000000L, 50);
+	while (true) {
+		int c = Serial.peek();
+
+		if (c == '-') {
+			if (OSCCAL != 0) {
+				OSCCAL = OSCCAL - 1;
+			}
+			flushSerialInput();
+		}
+		else if (c == '+') {
+			if (OSCCAL != 0xff) {
+				OSCCAL = OSCCAL + 1;
+			}
+			flushSerialInput();
+		}
+		else if (c == 's') {
+			int64_t value = (int64_t)OSCCAL;
+			hw.eepromUpdateInt64(SAVED_OSCCAL_ADDRESS, value);
+			serialPrintln(F("Calibration saved."));
+			flushSerialInput();
+			goto done;
+		}
+		else if (c == 'q') {
+			serialPrintln(F("Calibration not saved."));
+			OSCCAL = originalValue;
+			flushSerialInput();
+			goto done;
+		}
+		else if (c != -1) {
+			serialPrintln(F("Please type one of: + - s q"));
+			flushSerialInput();
+		}
+		delay(100);
+	}
+
+done:
+	stopPD3PWM();
 }
 
 /********************************************************************
@@ -353,6 +404,7 @@ void productionTestSetup() {
 	serialPrintln(F("7 - Charger Detect test"));
 	serialPrintln(F("8 - Current Sensor test"));
 	serialPrintln(F("r - Reset"));
+	serialPrintln(F("c - Calibrate MCU Clock"));
 }
 
 void productionTestLoop() {
@@ -369,6 +421,7 @@ void productionTestLoop() {
 		case '7': testChargerDetect(); break;
 		case '8': testCurrentSensor(); break;
 		case 'r': case 'R': hw.reset(); break;
+		case 'c': calibrateMCUClock(); break;
 		default: serialPrintf("Unknown command '%c'", command); break;
 	}
 }

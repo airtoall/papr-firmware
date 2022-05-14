@@ -19,3 +19,7 @@ extern const uint16_t expectedFanRPM[];
 const int32_t BUZZER_FREQUENCY = 2500; // in Hz
 
 const int BUZZER_DUTYCYCLE = 50; // in percent
+
+const uint16_t SAVED_MAX_VOLTAGE_ADDRESS = 8;
+
+const uint16_t SAVED_OSCCAL_ADDRESS = 16;

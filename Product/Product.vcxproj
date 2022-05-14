@@ -114,6 +114,7 @@
     <ClInclude Include="Battery.h" />
     <ClInclude Include="MiscConstants.h" />
     <ClInclude Include="PB2PWM.h" />
+    <ClInclude Include="PD3PWM.h" />
     <ClInclude Include="PeriodicCallback.h" />
     <ClInclude Include="PressDetector.h" />
     <ClInclude Include="Main.h" />
@@ -130,6 +131,7 @@
     <ClCompile Include="MiscConstants.cpp" />
     <ClCompile Include="MySerial.cpp" />
     <ClCompile Include="PB2PWM.cpp" />
+    <ClCompile Include="PD3PWM.cpp" />
     <ClCompile Include="ProductionTest.cpp" />
   </ItemGroup>
   <ItemGroup>

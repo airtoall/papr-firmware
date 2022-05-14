@@ -54,6 +54,9 @@
     <ClInclude Include="MiscConstants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PD3PWM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Hardware.cpp">
@@ -78,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MiscConstants.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PD3PWM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

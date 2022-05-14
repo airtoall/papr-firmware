@@ -608,6 +608,13 @@ bool Main::setup()
     hw.setBuzzer(false, 0, 0);
     //flashAllLEDs(50UL, 3); // tell the user we are alive
 
+    // If a calibrated control value has been set for the
+    // internal MCU oscillator, then assign that value to the calibration register.
+    int64_t calibrationValue = hw.eepromReadInt64(SAVED_OSCCAL_ADDRESS);
+    if (calibrationValue != -1LL) {
+        OSCCAL = calibrationValue;
+    }
+
     // Initialize the serial port with input enabled, and check to see if the user wants to enter Test Mode.
     serialBegin(true);
     serialPrintf("%s %s %s (flags %d)\r\nType 't' to enter test mode", PRODUCT_ID, __DATE__, __TIME__, resetFlags);
