@@ -136,6 +136,8 @@ Unit testing: at present there is no automated testing of this code. However, th
 
 Debugger: I have not succeeded in using a debugger on the PAPR. If you figure out how to do it, please update this Readme with instructions.
 
+See the comments at the top of Main.cpp for more programming notes.
+
 ### Development practices
 
 I haven't included any best practices guidelines for coding because there are a million web sites that talk about this (for example [this one](https://www.thinkful.com/blog/software-engineering-best-practices/)). The PAPR is a medical device and we need the code to be professional, high-quality, maintainable, and reliable. Please follow the naming, formatting, and commenting practices that you see in the code. Make sure your code is as clean and simple as possible. Make sure that other developers will be able to read and understand your code. Make sure you test your code thoroughly - once the product is delivered to the customer it is extremely difficult to fix bugs or update the code. Run the full [Functional Core Verification Test Suite](https://docs.google.com/document/d/1ubjNnj6kYDCdJMwp07bt-jukzoTlcU7nhaN4yKzK2nk/) at least once before shipping a new release. If you find errors or omissions in this Readme, please update it to make life easier for the next developer. If you add new features or change the behavior in any way, make sure to update, where applicable, the Specification, the Verification test suite (see links below), this readme file, and/or the comments in the code.
