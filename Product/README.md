@@ -136,7 +136,7 @@ Unit testing: at present there is no automated testing of this code. However, th
 
 Debugger: I have not succeeded in using a debugger on the PAPR. If you figure out how to do it, please update this Readme with instructions.
 
-See the comments at the top of Main.cpp for more programming notes.
+See the comments at the top of Main.cpp for more programming notes. There are also lots of comments throughout the code that will help you understand the code and the hardware.
 
 ### Development practices
 
