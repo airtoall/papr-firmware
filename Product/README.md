@@ -94,6 +94,20 @@ To download firmware from Command Prompt, do this:
 
 Once firmware is installed, it will immediately start running. To make it run properly, you may need to disconnect the 6-pin programming connector.
 
+### Making a "release" build
+
+We strongly recommend that you observe the following process for any firmware build that will be distributed outside the firmware development team.
+
+1. make sure all the associated source files, documentation, etc are committed to the master branch of the Product directory.
+1. on your development machine, do "git checkout" of the master branch, at the corresponding SHA (e.g. git checkout 40ce332)
+1. in the IDE, open the Product solution
+1. edit MiscConstants.cpp, and change "xxxx" to the SHA (e.g. 40ce332). This string will print on the serial port when the firmware starts up.
+1. do a clean, then do a build
+1. copy the file Product/Release/Product.ino.hex to the Product/binaries folder
+1. rename that file to Product.yyyymmdd.SHA.ino.hex (e.g. Product.20220517.40ce332.hex) where yyyymmdd is today's date
+1. throw away the changes to MiscConstants.cpp, (by doing "git restore Product/MiscConstants.cpp" or equivalent)
+1. commit the new file Product/binaries/Product.yyyymmdd.SHA.ino.hex
+
 ### Using the serial port
 
 The serial port pins PD0 and PD1 are exposed via the PCB's serial header. To access the serial port from your computer:
@@ -121,6 +135,8 @@ The file `board.txt` is used by the compiler to define certain settings. For thi
 Unit testing: at present there is no automated testing of this code. However, the code is broken down into C++ classes in a way that would make it somewhat easy to add unit testing. The repo [markshepherd/papr-firmware](https://github.com/markshepherd/papr-firmware) has a branch "unittest" that contains some very-out-of-date experimental code for this.
 
 Debugger: I have not succeeded in using a debugger on the PAPR. If you figure out how to do it, please update this Readme with instructions.
+
+See the comments at the top of Main.cpp for more programming notes. There are also lots of comments throughout the code that will help you understand the code and the hardware.
 
 ### Development practices
 
