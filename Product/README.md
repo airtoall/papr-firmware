@@ -6,6 +6,10 @@ The firmware runs on the ATMega328p microcontroller chip (the "MCU") that is on 
 
 This is an Arduino-compatible app, written in C++. The app doesn't run on any actual arduino board, but we use the Arduino IDE and runtime as the base for this app so that we can take advantage of the Arduino APIs, Arduino libraries, and the Arduino community (forums, blogs, etc). If it became necessary to eliminate any Arduino dependencies, I think you could do it with a day or two of work.
 
+## How to download a code image
+
+Code images are available as `.hex` files in the `binaries` folder. Images are named "Product.ino._yyyymmdd_._sha_.hex" where _yyyymmdd_ is the date and _sha_ identifies the exact source code version. Go to the `binaries` folder and click on the image you want (usually this would be the most recent), then click Raw, then do File > Save As. You can then install the code image into the PAPR using avrdude (described below), or whatever programming tool you like.
+
 ## Dev environment setup
 
 To compile or develop this code:
